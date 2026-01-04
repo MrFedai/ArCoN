@@ -1,0 +1,35 @@
+[global_config]
+  geometry_hinting = True
+  scroll_tabbar = True
+  always_on_top = True
+  sticky = True
+  ask_before_closing = never
+  always_split_with_profile = True
+  clear_select_on_copy = True
+  link_single_click = True
+  new_tab_after_current_tab = True
+[keybindings]
+[profiles]
+  [[default]]
+    visible_bell = True
+    urgent_bell = True
+    background_color = "#241f31"
+    background_darkness = 0.56
+    background_type = transparent
+    cursor_shape = underline
+    font = Adwaita Mono 10
+    foreground_color = "#ffffff"
+    scrollback_infinite = True
+    palette = "#000000:#3584e4:#e01b24:#ff7800:#26a269:#1a5fb4:#1a5fb4:#dc8add:#000000:#9a9996:#e01b24:#fce94f:#57e389:#99c1f1:#99c1f1:#613583"
+    bold_is_bright = True
+    copy_on_selection = True
+[layouts]
+  [[default]]
+    [[[window0]]]
+      type = Window
+      parent = ""
+      size = 600, 900
+    [[[child1]]]
+      type = Terminal
+      parent = window0
+[plugins]
