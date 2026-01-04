@@ -525,13 +525,20 @@ MIT License - Do whatever you want, just keep the credits.
 - [Hyprdots](https://github.com/prasanthrangan/hyprdots) by Prasanth Rangan
 - [ML4W](https://github.com/mylinuxforwork/dotfiles) by Stephan Raabe
 - [JaKooLit](https://github.com/JaKooLit/Hyprland-Dots) by JaKooLit
+- [BlackArch](https://blackarch.org/) - CyberRepo
+- [hyprwm](https://github.com/hyprwm/Hyprland) - Hyprland
+
 
 ### **Tools & Frameworks**
 - [Oh-My-Zsh](https://github.com/ohmyzsh/ohmyzsh) - Zsh framework
 - [Starship](https://github.com/starship/starship) - Cross-shell prompt
 - [Powerlevel10k](https://github.com/romkatv/powerlevel10k) - Zsh theme
 - [Reflector](https://xyne.dev/projects/reflector/) - Mirror optimization
-
+- [rkhunter](https://github.com/installation/rkhunter) - Rootkit & Backdoor Hunter
+- [clamav](https://github.com/Cisco-Talos/clamav) - Antivirus Engine 
+- [lynis](https://github.com/CISOfy/lynis) - System Hardening & Audit Tool
+- [Firejail](https://github.com/netblue30/firejail) - Application Sandboxing 
+- [arch-audit](https://github.com/ilpianista/arch-audit) - Vulnerability Scanner (CVE Check)
 ---
 
 ## 📧 Support & Community
