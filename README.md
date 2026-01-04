@@ -437,25 +437,20 @@ Script automatically:
 ## 🖼️ Screenshots
 
 ### Sector 1: Base System Update
-![Reflector Live Output](https://via.placeholder.com/800x400?text=Reflector+Live+Benchmarking)
+![Reflector Live Output](./configs/scrn/scrn1.png)
 
 ### Sector 2: BlackArch Manager
-![BlackArch Menu](https://via.placeholder.com/800x400?text=BlackArch+Repository+Manager)
+![BlackArch Menu]![Reflector Live Output](./configs/scrn/scrn6.png)
 
 ### Sector 3: Package Installer
-![Package Preview](https://via.placeholder.com/800x400?text=Package+Preview+Table)
 
 ### Sector 4: Gaming Setup
-![Gaming Mode](https://via.placeholder.com/800x400?text=Gaming+Mode+Progress+Bar)
 
 ### Sector 5: Hyprland Themes
-![Hyprland Selection](https://via.placeholder.com/800x400?text=Hyprland+Theme+Selector)
 
 ### Sector 6: GNOME Configuration
-![GNOME Debloat](https://via.placeholder.com/800x400?text=GNOME+Debloat+Process)
 
 ### Sector 7: Terminal Setup
-![Terminal Config](https://via.placeholder.com/800x400?text=Terminal+and+Shell+Setup)
 
 *Replace placeholders with real screenshots after installation!*
 
