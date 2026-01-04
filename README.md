@@ -1,9 +1,9 @@
-# 🐧 ArCoN v3
+# 🐧 ArCoN v2.5
 ## *Global Standard, Optimized, Anonymized & Gaming Ready*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Arch Linux](https://img.shields.io/badge/Arch-Linux-1793D1?logo=arch-linux)](https://archlinux.org)
-[![Version](https://img.shields.io/badge/Version-3.0-orange)](https://github.com/mrfedai/ArCoN)
+[![Version](https://img.shields.io/badge/Version-2.5-orange)](https://github.com/mrfedai/ArCoN)
 [![Shell](https://img.shields.io/badge/Shell-Bash-green?logo=gnu-bash)](https://www.gnu.org/software/bash/)
 
 > **The ultimate Arch Linux automation toolkit.** One script. Infinite possibilities.  
