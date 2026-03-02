@@ -79,20 +79,6 @@ Edit `configs/gno.conf` for GNOME settings, or `configs/hypr/` for Hyprland conf
 
 ---
 
-
-
-## 📊 At a Glance
-
-| | |
-|--|--|
-| Lines of code | ~1200 |
-| Default packages | 57 |
-| Desktop environments | GNOME, Hyprland |
-| Shell options | Zsh, Fish, Bash |
-| Average setup time | 15–30 min |
-
----
-
 ## 📋 Installation Flow (30-Minute Journey)
 
 ```mermaid
