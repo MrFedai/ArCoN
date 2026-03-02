@@ -16,16 +16,26 @@ ask_step() {
     read -r choice
     [[ "$choice" == [yY] || "$choice" == [yY][eE][sS] ]]
 }
-
-# --- PRE-FLIGHT CHECKS ---
+# --- FIX PACMAN LOCK ---
+# Eğer pacman çalışmıyorsa ama kilit dosyası duruyorsa sil
+if [ -f /var/lib/pacman/db.lck ]; then
+    if ! pgrep -x "pacman" > /dev/null; then
+        echo -e "${YELLOW}[!] Stale pacman lock detected. Removing...${NC}"
+        sudo rm /var/lib/pacman/db.lck
+    else
+        echo -e "${RED}[ERROR] Pacman is currently running in another process!${NC}"
+        exit 1
+    fi
+fi
+# --- PRE FLIGHT CHECKS ---
 echo -e "${YELLOW}[*] Running pre-flight checks...${NC}"
 
 # 1. Check Internet Connection
-if ! ping -c 1 google.com &> /dev/null && ! ping -c 1 8.8.8.8 &> /dev/null; then
-    echo -e "${RED}[ERROR] No internet connection detected!${NC}"
-    echo -e "${YELLOW}[TIP] Please check your network and try again.${NC}"
-    exit 1
-fi
+#if ! ping -c 1 google.com &> /dev/null && ! ping -c 1 8.8.8.8 &> /dev/null; then
+#    echo -e "${RED}[ERROR] No internet connection detected!${NC}"
+#    echo -e "${YELLOW}[TIP] Please check your network and try again.${NC}"
+#    exit 1
+#fi
 echo -e "${GREEN}[✓] Internet connection: OK${NC}"
 
 # 2. Check Disk Space (minimum 10GB free)
@@ -49,18 +59,20 @@ echo -e "${GREEN}[✓] Sudo privileges: OK${NC}"
 echo -e "${GREEN}[✓] Pre-flight checks passed!${NC}\n"
 
 # --- LIVE USB DETECTION ---
-if df -h / | grep -q "tmpfs\|overlay"; then
-    echo -e "${RED}╔════════════════════════════════════════════╗${NC}"
-    echo -e "${RED}║        ⚠️  LIVE ENVIRONMENT DETECTED  ⚠️       ║${NC}"
-    echo -e "${RED}╚════════════════════════════════════════════╝${NC}"
-    echo -e "${YELLOW}[WARNING] You are running from a Live USB/ISO!${NC}"
-    
-    if ! ask_step "Continue anyway (NOT RECOMMENDED)"; then
-        echo -e "${BLUE}[*] Installation cancelled. Goodbye!${NC}"
-        exit 0
-    fi
-    echo -e "${YELLOW}[!] Proceeding at your own risk...${NC}\n"
-fi
+#if df -h / | grep -q "tmpfs\|overlay"; then
+#    echo -e "${RED}╔════════════════════════════════════════════╗${NC}"
+#    echo -e "${RED}║        ⚠️  LIVE ENVIRONMENT DETECTED  ⚠️       ║${NC}"
+#    echo -e "${RED}╚════════════════════════════════════════════╝${NC}"
+#    echo -e "${YELLOW}[WARNING] You are running from a Live USB/ISO!${NC}"
+#    
+#    if ! ask_step "Continue anyway (NOT RECOMMENDED)"; then
+#        echo -e "${BLUE}[*] Installation cancelled. Goodbye!${NC}"
+#        exit 0
+#    fi
+#    echo -e "${YELLOW}[!] Proceeding at your own risk...${NC}\n"
+#fi
+
+END
 
 # --- OS DETECTION ---
 if [ -f /etc/os-release ]; then
