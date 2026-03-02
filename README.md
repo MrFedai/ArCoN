@@ -165,8 +165,8 @@ graph TD
 ## 🤝 Contributing
 
 Want to make **ArCoN** even better? Here's how:
-1.**Fork the repo** (Click the "Fork" button at the top right of this page)
-2.**Clone your fork:** `the repo ```bash
+1. **Fork the repo** (Click the "Fork" button at the top right of this page)
+2. **Clone your fork:** `the repo ```bash
    git clone [https://github.com/YOUR-USERNAME/ArCoN.git](https://github.com/YOUR-USERNAME/ArCoN.git)
    cd ArCoN`
 3. **Create** a feature branch: `git checkout -b feature/EpicFeature`
