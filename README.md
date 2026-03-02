@@ -117,14 +117,6 @@ graph TD
 
 ---
 
-## 🔮 Coming in v3.0
-
-- **Cross-Platform Support** — Full compatibility with all Linux & Unix-based systems (Debian, Fedora, openSUSE, macOS and more)
-- **Object-Oriented Rewrite** — Entire codebase refactored into modular OOP architecture for easier maintenance and contribution
-- **Auto Hardware Detection** — GPU, CPU, and system specs detected automatically; drivers and updates applied accordingly — no manual selection needed
-
----
-
 ## 📜 Changelog
 
 ### **v2.5** (Current) - *The Beast Update*
@@ -140,16 +132,26 @@ graph TD
 - 🛡️ **GPG Auto-Fix**: Handles Docker/Live USB conflicts
 - 🧠 **Zero Division Protection**: Fixed empty package list handling
 
+---
 
-## 🤝 Contributing
+## 🔮 Coming in v3.0
 
-Want to make ArCoN even better? Here's how:
+- **Cross-Platform Support** — Full compatibility with all Linux & Unix-based systems (Debian, Fedora, openSUSE, macOS and more)
+- **Object-Oriented Rewrite** — Entire codebase refactored into modular OOP architecture for easier maintenance and contribution
+- **Auto Hardware Detection** — GPU, CPU, and system specs detected automatically; drivers and updates applied accordingly — no manual selection needed
 
-1. **Fork** the repo
-2. **Create** a feature branch: `git checkout -b feature/EpicFeature`
-3. **Commit** your changes: `git commit -m 'Add EpicFeature'`
-4. **Push**: `git push origin feature/EpicFeature`
-5. **Open** a Pull Request
+---
+
+💡 Ideas We'd Love help with:
+[ ] Support for other distros (Fedora, Manjaro)
+
+[ ] More Hyprland themes
+
+[ ] Gaming benchmarking tools
+
+[ ] Docker container support
+
+[ ] Automated testing framework
 
 ### **Ideas We'd Love:**
 - Support for other distros (Fedora, Manjaro)
@@ -159,6 +161,22 @@ Want to make ArCoN even better? Here's how:
 - Automated testing framework
 
 ---
+
+## 🤝 Contributing
+
+Want to make **ArCoN** even better? Here's how:
+1.**Fork the repo** (Click the "Fork" button at the top right of this page)
+1.1 **Clone your fork:** `the repo ```bash
+   git clone [https://github.com/YOUR-USERNAME/ArCoN.git](https://github.com/YOUR-USERNAME/ArCoN.git)
+   cd ArCoN`
+2. **Create** a feature branch: `git checkout -b feature/EpicFeature`
+3. **Commit** your changes: `git commit -m 'Add EpicFeature'`
+4. **Push**: `git push origin feature/EpicFeature`
+5. **Open** a Pull Request `git push origin feature/EpicFeature`
+6. Open a Pull Request via GitHub.
+
+---
+
 
 ## 📄 License
 
