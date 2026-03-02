@@ -166,14 +166,14 @@ graph TD
 
 Want to make **ArCoN** even better? Here's how:
 1.**Fork the repo** (Click the "Fork" button at the top right of this page)
-1.1 **Clone your fork:** `the repo ```bash
+2.**Clone your fork:** `the repo ```bash
    git clone [https://github.com/YOUR-USERNAME/ArCoN.git](https://github.com/YOUR-USERNAME/ArCoN.git)
    cd ArCoN`
-2. **Create** a feature branch: `git checkout -b feature/EpicFeature`
-3. **Commit** your changes: `git commit -m 'Add EpicFeature'`
-4. **Push**: `git push origin feature/EpicFeature`
-5. **Open** a Pull Request `git push origin feature/EpicFeature`
-6. Open a Pull Request via GitHub.
+3. **Create** a feature branch: `git checkout -b feature/EpicFeature`
+4. **Commit** your changes: `git commit -m 'Add EpicFeature'`
+5. **Push**: `git push origin feature/EpicFeature`
+6. **Open** a Pull Request `git push origin feature/EpicFeature`
+7. Open a Pull Request via GitHub.
 
 ---
 
