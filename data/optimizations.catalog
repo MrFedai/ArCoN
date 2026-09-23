@@ -1,0 +1,35 @@
+# ArCoN v3.0 optimization catalog (shared by setup.sh and setup.ps1)
+# id|category|platforms|risk|profiles|description|expected effect|rollback|verification
+#
+# platforms: linux (all tested distros) | arch | debian | ubuntu | fedora | opensuse | macos | windows
+# profiles : comma list of optimization profiles that include the item by default
+#            (custom = never implicit; select with OPT_INCLUDE / -Optimizations)
+# risk     : low (reversible, no behaviour change) | medium (behaviour change, reversible)
+#            | high (hard to reverse / can break workflows) — high is never default
+# Items whose name ends in _report never change the system.
+#
+# ---------------------------------------------------------------- Linux
+fstrim_timer|storage|linux|low|minimal,balanced,performance,gaming,developer,security|Enable weekly fstrim.timer (only when root disk is SSD/NVMe) [v2.5]|Keeps SSD write performance stable over time|systemctl disable fstrim.timer (journaled)|systemctl is-enabled fstrim.timer
+bluetooth_autoenable|services|linux|low|balanced,performance,gaming,developer|Set AutoEnable=true and enable bluetooth.service (skipped when no adapter) [v2.5]|Bluetooth adapter powered at boot|restore /etc/bluetooth/main.conf backup, disable service|systemctl is-enabled bluetooth
+zram|memory|linux|medium|performance,gaming|zram swap via zram-generator: min(ram, 8 GiB), zstd (skipped if zram already active) [v2.5, fixed]|Compressed in-RAM swap; fewer stalls under memory pressure|remove /etc/systemd/zram-generator.conf (journaled)|swapon --show shows /dev/zram0
+swappiness_report|memory|linux|low|minimal,balanced,performance,gaming,developer,security|Report vm.swappiness and zram state with a recommendation (no change)|Information only|none (read-only)|n/a
+power_profile|power|linux|medium|performance,gaming|power-profiles-daemon -> performance (skipped on battery)|Higher sustained CPU/GPU clocks, more power draw|powerprofilesctl set <previous> (journaled)|powerprofilesctl get
+ananicy|cpu|arch|low|performance,gaming|Enable ananicy-cpp when installed (v2.5 only printed a hint)|Automatic process priorities for interactive apps|systemctl disable ananicy-cpp (journaled)|systemctl is-active ananicy-cpp
+pkg_cache_trim|cleanup|arch|low|minimal,balanced,performance,gaming,developer,security|paccache -rk2: keep the last 2 versions of each package|Frees disk space while keeping a downgrade path|not needed (packages can be re-downloaded)|du -sh /var/cache/pacman/pkg
+pkg_cache_clean|cleanup|linux|low|minimal,balanced,performance,gaming,developer,security|apt-get autoclean / dnf clean packages / zypper clean (non-Arch)|Frees disk space from obsolete downloads|not needed|package cache size
+pkg_cache_purge|cleanup|linux|medium|custom|Remove the ENTIRE package cache (v2.5 final cleanup: pacman -Scc)|Maximum disk space; removes the downgrade path|irreversible (logged)|cache directory empty
+orphans|cleanup|linux|medium|balanced,performance,gaming,developer|Remove orphaned dependency packages (list is shown first) [v2.5]|Frees disk space, smaller update set|reinstall packages listed in the run log|no orphans reported
+journal_vacuum|cleanup|linux|medium|performance,developer|journalctl --vacuum-size=500M|Caps systemd journal disk usage|irreversible (old logs deleted)|journalctl --disk-usage
+service_report|services|linux|low|minimal,balanced,performance,gaming,developer,security|Report slowest boot units (systemd-analyze blame) and failed units|Information only|none (read-only)|n/a
+# ---------------------------------------------------------------- macOS
+brew_cleanup|cleanup|macos|low|minimal,balanced,performance,gaming,developer,security|brew cleanup --prune=30 (old Homebrew downloads/versions)|Frees disk space|not needed|brew cleanup -n shows nothing
+launch_items_report|startup|macos|low|minimal,balanced,performance,gaming,developer,security|List third-party LaunchAgents/LaunchDaemons|Information only|none (read-only)|n/a
+power_report|power|macos|low|minimal,balanced,performance,gaming,developer,security|Report pmset settings (sleep, lowpowermode)|Information only|none (read-only)|n/a
+cache_report|cleanup|macos|low|minimal,balanced,performance,gaming,developer,security|Report size of ~/Library/Caches (never deleted automatically)|Information only|none (read-only)|n/a
+# ---------------------------------------------------------------- Windows
+temp_cleanup|cleanup|windows|low|minimal,balanced,performance,gaming,developer,security|Delete files older than 7 days in %TEMP%|Frees disk space|irreversible (temporary files only)|%TEMP% size before/after
+startup_report|startup|windows|low|minimal,balanced,performance,gaming,developer,security|List startup programs (Win32_StartupCommand)|Information only|none (read-only)|n/a
+service_report|services|windows|low|minimal,balanced,performance,gaming,developer,security|Report automatic services that are stopped|Information only|none (read-only)|n/a
+storage_report|storage|windows|low|minimal,balanced,performance,gaming,developer,security|Report free space, media type and TRIM state (fsutil)|Information only|none (read-only)|n/a
+power_plan|power|windows|medium|performance,gaming|Activate the High performance power plan (skipped on battery)|Higher sustained clocks, more power draw|powercfg /setactive <previous GUID> (journaled)|powercfg /getactivescheme
+game_mode|gaming|windows|low|gaming|Enable Windows Game Mode (HKCU\Software\Microsoft\GameBar AutoGameModeEnabled=1)|Windows prioritises the foreground game|registry value restored from journal|registry value = 1

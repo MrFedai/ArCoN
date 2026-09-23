@@ -1,0 +1,169 @@
+# ArCoN v3.0 package catalog
+# ---------------------------------------------------------------------------
+# One logical package per line, pipe separated. Columns:
+#   id | groups | arch | debian | ubuntu | fedora | opensuse | brew | winget | flatpak | description
+#
+#   "-"          not available / not applicable on that platform
+#   arch         v2.5 native name; ArCoN decides pacman vs AUR at runtime
+#                exactly like v2.5 did (pacman -Si hit => official, else AUR)
+#   brew         "cask:NAME" for casks, plain NAME for formulae
+#   flatpak      Flathub application id (Linux fallback, opt-in: PKG_ALLOW_FLATPAK)
+#   groups       comma separated; v2.5 groups: essentials media cyber remote power
+#                internal groups (used by modules): gaming gpu security hardened
+#                shell terminal hyprland gnome base optimize
+#
+# Every non "-" cell is validated by scripts/verify-catalog.py against the
+# official package indexes (see docs/PACKAGE-CATALOG.md for the last report).
+# ---------------------------------------------------------------------------
+# ===== v2.5 PKG_ESSENTIALS =====
+google-chrome|essentials|google-chrome|-|-|-|-|cask:google-chrome|Google.Chrome|com.google.Chrome|Google Chrome browser
+man-db|essentials|man-db|man-db|man-db|man-db|man|-|-|-|Manual page reader
+man-pages|essentials|man-pages|manpages|manpages|man-pages|man-pages|-|-|-|Linux manual pages
+telegram-desktop|essentials|telegram-desktop|telegram-desktop|telegram-desktop|-|telegram-desktop|cask:telegram|Telegram.TelegramDesktop|org.telegram.desktop|Telegram messenger
+localsend|essentials|localsend-bin|-|-|-|-|cask:localsend|LocalSend.LocalSend|org.localsend.localsend_app|LAN file sharing
+code|essentials|code|-|-|-|-|cask:visual-studio-code|Microsoft.VisualStudioCode|com.visualstudio.code|Visual Studio Code / Code-OSS
+vim|essentials|vim|vim|vim|vim-enhanced|vim|vim|vim.vim|-|Vim editor
+neovim|essentials|neovim|neovim|neovim|neovim|neovim|neovim|Neovim.Neovim|-|Neovim editor
+git|essentials,base|git|git|git|git|git|git|Git.Git|-|Git version control
+riseup-vpn|essentials|riseup-vpn|riseup-vpn|riseup-vpn|-|-|cask:riseup-vpn|-|-|Riseup VPN client
+vlc|essentials|vlc|vlc|vlc|vlc|vlc|cask:vlc|VideoLAN.VLC|org.videolan.VLC|VLC media player
+planify|essentials|planify|-|-|-|-|-|-|io.github.alainm23.planify|Planify task manager
+flameshot|essentials|flameshot|flameshot|flameshot|flameshot|flameshot|cask:flameshot|Flameshot.Flameshot|org.flameshot.Flameshot|Screenshot tool
+timeshift|essentials|timeshift|timeshift|timeshift|timeshift|timeshift|-|-|-|System snapshots (Linux)
+btop|essentials|btop|btop|btop|btop|btop|btop|aristocratos.btop4win|-|Resource monitor
+fastfetch|essentials|fastfetch|fastfetch|fastfetch|fastfetch|fastfetch|fastfetch|Fastfetch-cli.Fastfetch|-|System information
+wget|essentials|wget|wget|wget|wget2-wget|wget|wget|-|-|HTTP downloader
+curl|essentials,base|curl|curl|curl|curl|curl|-|-|-|HTTP client
+unzip|essentials|unzip|unzip|unzip|unzip|unzip|-|-|-|ZIP extraction
+zip|essentials|zip|zip|zip|zip|zip|-|7zip.7zip|-|ZIP archiver (7-Zip on Windows)
+ntfs-3g|essentials|ntfs-3g|ntfs-3g|ntfs-3g|ntfs-3g|ntfs-3g|-|-|-|NTFS driver (Linux)
+dosfstools|essentials|dosfstools|dosfstools|dosfstools|dosfstools|dosfstools|-|-|-|FAT tools (Linux)
+# ===== v2.5 PKG_MEDIA =====
+libreoffice|media|libreoffice-fresh|libreoffice|libreoffice|libreoffice|libreoffice|cask:libreoffice|TheDocumentFoundation.LibreOffice|org.libreoffice.LibreOffice|Office suite
+blender|media|blender|blender|blender|blender|blender|cask:blender|BlenderFoundation.Blender|org.blender.Blender|3D suite
+discord|media|discord|-|-|-|-|cask:discord|Discord.Discord|com.discordapp.Discord|Discord chat
+firefox|media|firefox|firefox-esr|firefox|firefox|MozillaFirefox|cask:firefox|Mozilla.Firefox|org.mozilla.firefox|Firefox browser
+gimp|media|gimp|gimp|gimp|gimp|gimp|cask:gimp|GIMP.GIMP.3|org.gimp.GIMP|Image editor
+obsidian|media|obsidian|-|-|-|-|cask:obsidian|Obsidian.Obsidian|md.obsidian.Obsidian|Markdown knowledge base
+kdenlive|media|kdenlive|kdenlive|kdenlive|kdenlive|kdenlive|cask:kdenlive|KDE.Kdenlive|org.kde.kdenlive|Video editor
+inkscape|media|inkscape|inkscape|inkscape|inkscape|inkscape|cask:inkscape|Inkscape.Inkscape|org.inkscape.Inkscape|Vector editor
+audacity|media|audacity|audacity|audacity|audacity|audacity|cask:audacity|Audacity.Audacity|org.audacityteam.Audacity|Audio editor
+easyeffects|media|easyeffects|easyeffects|easyeffects|easyeffects|easyeffects|-|-|com.github.wwmm.easyeffects|PipeWire audio effects
+losslesscut|media|losslesscut-bin|-|-|-|-|cask:losslesscut|-|no.mifi.losslesscut|Lossless video cutter
+upscayl|media|upscayl-bin|-|-|-|-|cask:upscayl|-|org.upscayl.Upscayl|AI image upscaler
+spotify|media|spotify|-|-|-|-|cask:spotify|Spotify.Spotify|com.spotify.Client|Spotify client
+obs-studio|media|obs-studio|obs-studio|obs-studio|obs-studio|obs-studio|cask:obs|OBSProject.OBSStudio|com.obsproject.Studio|Streaming / recording
+shortwave|media|shortwave|shortwave|shortwave|-|shortwave|-|-|de.haeckerfelix.Shortwave|Internet radio
+# ===== v2.5 PKG_CYBER =====
+nmap|cyber|nmap|nmap|nmap|nmap|nmap|nmap|Insecure.Nmap|-|Network scanner
+metasploit|cyber|metasploit|-|-|-|-|cask:metasploit|-|-|Exploitation framework
+masscan|cyber|masscan|masscan|masscan|masscan|masscan|masscan|-|-|Mass IP port scanner
+wireshark|cyber|wireshark-qt|wireshark|wireshark|wireshark|wireshark|cask:wireshark|WiresharkFoundation.Wireshark|-|Packet analyzer
+aircrack-ng|cyber|aircrack-ng|aircrack-ng|aircrack-ng|aircrack-ng|aircrack-ng|aircrack-ng|-|-|Wi-Fi security suite
+burpsuite|cyber|burpsuite|-|-|-|-|cask:burp-suite|PortSwigger.BurpSuite.Community|-|Web security proxy
+gobuster|cyber|gobuster|gobuster|gobuster|-|gobuster|gobuster|-|-|Directory/DNS brute forcer
+hashcat|cyber|hashcat|hashcat|hashcat|hashcat|hashcat|hashcat|-|-|Password recovery
+hydra|cyber|hydra|hydra|hydra|hydra|thc-hydra|hydra|-|-|Login brute forcer
+john|cyber|john|john|john|john|john|john-jumbo|-|-|John the Ripper
+sqlmap|cyber|sqlmap|sqlmap|sqlmap|sqlmap|sqlmap|sqlmap|-|-|SQL injection tool
+nikto|cyber|nikto|nikto|nikto|nikto|nikto|nikto|-|-|Web server scanner
+ghidra|cyber|ghidra|-|-|-|-|cask:ghidra|-|-|Reverse engineering suite
+radare2|cyber|radare2|radare2|radare2|radare2|radare2|radare2|-|-|Reverse engineering framework
+bettercap|cyber|bettercap|bettercap|bettercap|-|bettercap|bettercap|-|-|Network attack/monitor tool
+exploitdb|cyber|exploitdb|-|-|-|-|exploitdb|-|-|Exploit database (searchsploit)
+remmina|cyber,remote|remmina|remmina|remmina|remmina|remmina|-|-|org.remmina.Remmina|Remote desktop client
+freerdp|cyber,remote|freerdp|freerdp3-x11|freerdp3-x11|freerdp|freerdp|freerdp|-|-|RDP client
+# ===== v2.5 PKG_REMOTE =====
+anydesk|remote|anydesk-bin|-|-|-|-|cask:anydesk|AnyDesk.AnyDesk|com.anydesk.Anydesk|AnyDesk remote desktop
+rustdesk|remote|rustdesk-bin|-|-|-|-|cask:rustdesk|RustDesk.RustDesk|com.rustdesk.RustDesk|RustDesk remote desktop
+x11vnc|remote|x11vnc|x11vnc|x11vnc|x11vnc|x11vnc|-|-|-|VNC server for X11
+openvpn|remote|openvpn|openvpn|openvpn|openvpn|openvpn|openvpn|OpenVPNTechnologies.OpenVPN|-|OpenVPN
+wireguard-tools|remote|wireguard-tools|wireguard-tools|wireguard-tools|wireguard-tools|wireguard-tools|wireguard-tools|WireGuard.WireGuard|-|WireGuard tools
+networkmanager-openvpn|remote|networkmanager-openvpn|network-manager-openvpn|network-manager-openvpn|NetworkManager-openvpn|NetworkManager-openvpn|-|-|-|NetworkManager OpenVPN plugin
+torbrowser-launcher|remote|torbrowser-launcher|torbrowser-launcher|torbrowser-launcher|torbrowser-launcher|torbrowser-launcher|cask:tor-browser|TorProject.TorBrowser|org.torproject.torbrowser-launcher|Tor Browser
+protonvpn|remote|proton-vpn-gtk-app|-|-|-|-|cask:protonvpn|Proton.ProtonVPN|com.protonvpn.www|Proton VPN
+# ===== v2.5 PKG_POWER =====
+onionshare|power|onionshare|onionshare|onionshare|onionshare|onionshare|cask:onionshare|-|org.onionshare.OnionShare|Anonymous file sharing
+metadata-cleaner|power|metadata-cleaner|metadata-cleaner|metadata-cleaner|-|metadata-cleaner|-|-|fr.romainvigier.MetadataCleaner|Metadata cleaner
+virt-manager|power|virt-manager|virt-manager|virt-manager|virt-manager|virt-manager|-|-|-|Virtual machine manager
+qemu|power|qemu-desktop|qemu-system-x86|qemu-system-x86|qemu-kvm|qemu|qemu|-|-|QEMU emulator
+ananicy-cpp|power|ananicy-cpp|-|-|-|-|-|-|-|Auto-nice daemon
+bleachbit|power|bleachbit|bleachbit|bleachbit|bleachbit|bleachbit|-|BleachBit.BleachBit|-|Disk cleaner
+stacer|power|stacer|-|stacer|-|-|-|-|-|System optimizer GUI
+pinokio|power|pinokio-bin|-|-|-|-|cask:pinokio|-|-|AI app browser
+stirling-pdf|power|stirling-pdf-bin|-|-|-|-|cask:stirling-pdf|-|-|PDF toolbox
+switcheroo|power|switcheroo|-|-|-|-|-|-|io.gitlab.adhami3310.Converter|Image converter
+converseen|power|converseen|converseen|converseen|converseen|converseen|-|-|net.fasterland.converseen|Batch image converter
+devtoys|power|devtoys-bin|-|-|-|-|cask:devtoys|DevToys-app.DevToys|-|Developer utilities
+clapgrep|power|clapgrep|-|-|-|-|-|-|de.leopoldluley.Clapgrep|Document search GUI
+# ===== v2.5 pacs.txt default =====
+cmake|custom,developer|cmake|cmake|cmake|cmake|cmake|cmake|Kitware.CMake|-|Build system
+# ===== base / tooling =====
+base-devel|base|base-devel|build-essential|build-essential|@development-tools|pattern:devel_basis|-|-|-|Compiler toolchain
+reflector|base|reflector|-|-|-|-|-|-|-|Arch mirror ranking
+pacman-contrib|base,optimize|pacman-contrib|-|-|-|-|-|-|-|paccache & friends
+flatpak|base|flatpak|flatpak|flatpak|flatpak|flatpak|-|-|-|Flatpak runtime
+# ===== gaming (v2.5 Gaming Mode) =====
+steam|gaming|steam|-|-|-|-|cask:steam|Valve.Steam|com.valvesoftware.Steam|Steam client
+gamemode|gaming|gamemode|gamemode|gamemode|gamemode|gamemode|-|-|-|Feral GameMode
+lib32-gamemode|gaming|lib32-gamemode|-|-|-|-|-|-|-|GameMode 32-bit
+mangohud|gaming|mangohud|mangohud|mangohud|mangohud|mangohud|-|-|-|Performance overlay
+lib32-mangohud|gaming|lib32-mangohud|-|-|-|-|-|-|-|MangoHud 32-bit
+lutris|gaming|lutris|-|lutris|lutris|lutris|-|-|net.lutris.Lutris|Game launcher
+vulkan-tools|gaming|vulkan-tools|vulkan-tools|vulkan-tools|vulkan-tools|vulkan-tools|-|-|-|vulkaninfo
+# ===== GPU driver stacks =====
+nvidia-open|gpu|nvidia-open|-|-|-|-|-|-|-|NVIDIA open kernel modules (Turing+)
+nvidia-open-dkms|gpu|nvidia-open-dkms|-|-|-|-|-|-|-|NVIDIA open kernel modules (DKMS)
+nvidia-utils|gpu|nvidia-utils|-|-|-|-|-|-|-|NVIDIA userspace
+lib32-nvidia-utils|gpu|lib32-nvidia-utils|-|-|-|-|-|-|-|NVIDIA userspace 32-bit
+nvidia-settings|gpu|nvidia-settings|-|-|-|-|-|-|-|NVIDIA settings GUI
+mesa|gpu|mesa|mesa-utils|mesa-utils|mesa-dri-drivers|Mesa|-|-|-|Mesa OpenGL
+lib32-mesa|gpu|lib32-mesa|-|-|-|-|-|-|-|Mesa 32-bit
+xf86-video-amdgpu|gpu|xf86-video-amdgpu|-|-|-|-|-|-|-|AMDGPU Xorg driver
+vulkan-radeon|gpu|vulkan-radeon|mesa-vulkan-drivers|mesa-vulkan-drivers|mesa-vulkan-drivers|libvulkan_radeon|-|-|-|RADV Vulkan
+lib32-vulkan-radeon|gpu|lib32-vulkan-radeon|-|-|-|-|-|-|-|RADV Vulkan 32-bit
+vulkan-intel|gpu|vulkan-intel|mesa-vulkan-drivers|mesa-vulkan-drivers|mesa-vulkan-drivers|libvulkan_intel|-|-|-|ANV Vulkan
+lib32-vulkan-intel|gpu|lib32-vulkan-intel|-|-|-|-|-|-|-|ANV Vulkan 32-bit
+# ===== security (v2.5 Sector 9) =====
+arch-audit|security|arch-audit|-|-|-|-|-|-|-|Arch CVE audit
+debsecan|security|-|debsecan|debsecan|-|-|-|-|-|Debian CVE audit
+clamav|security|clamav|clamav|clamav|clamav|clamav|clamav|-|-|ClamAV antivirus
+clamav-freshclam|security|-|clamav-freshclam|clamav-freshclam|clamav-update|-|-|-|-|ClamAV signature updater
+rkhunter|security|rkhunter|rkhunter|rkhunter|rkhunter|rkhunter|-|-|-|Rootkit hunter
+lynis|security|lynis|lynis|lynis|lynis|lynis|lynis|-|-|Security auditing
+firejail|security|firejail|firejail|firejail|firejail|firejail|-|-|-|Application sandbox
+nethogs|security|nethogs|nethogs|nethogs|nethogs|nethogs|-|-|-|Per-process bandwidth
+ufw|security|ufw|ufw|ufw|-|-|-|-|-|Uncomplicated firewall
+opensnitch|hardened|opensnitch|opensnitch|opensnitch|-|-|-|-|-|Application firewall
+python3-opensnitch-ui|hardened|-|python3-opensnitch-ui|python3-opensnitch-ui|-|-|-|-|-|OpenSnitch UI (Debian)
+usbguard|hardened|usbguard|usbguard|usbguard|usbguard|usbguard|-|-|-|USB device authorization
+# ===== optimization =====
+zram-generator|optimize|zram-generator|systemd-zram-generator|systemd-zram-generator|zram-generator|zram-generator|-|-|-|zram swap generator
+power-profiles-daemon|optimize|power-profiles-daemon|power-profiles-daemon|power-profiles-daemon|power-profiles-daemon|power-profiles-daemon|-|-|-|Power profiles
+# ===== terminal / shell (v2.5 Sector 7/8) =====
+terminator|terminal|terminator|terminator|terminator|terminator|terminator|-|-|-|Terminator terminal
+kitty|terminal,hyprland|kitty|kitty|kitty|kitty|kitty|cask:kitty|-|-|Kitty terminal
+alacritty|terminal|alacritty|alacritty|alacritty|alacritty|alacritty|cask:alacritty|Alacritty.Alacritty|-|Alacritty terminal
+gnome-terminal|terminal|gnome-terminal|gnome-terminal|gnome-terminal|gnome-terminal|gnome-terminal|-|-|-|GNOME Terminal
+windows-terminal|terminal|-|-|-|-|-|-|Microsoft.WindowsTerminal|-|Windows Terminal
+powershell|terminal|-|-|-|-|-|cask:powershell|Microsoft.PowerShell|-|PowerShell 7
+zsh|shell|zsh|zsh|zsh|zsh|zsh|zsh|-|-|Z shell
+fish|shell|fish|fish|fish|fish|fish|fish|-|-|Fish shell
+starship|shell|starship|starship|starship|-|starship|starship|Starship.Starship|-|Starship prompt
+font-jetbrains-nerd|shell|ttf-jetbrains-mono-nerd|-|-|-|-|cask:font-jetbrains-mono-nerd-font|DEVCOM.JetBrainsMonoNerdFont|-|JetBrainsMono Nerd Font
+# ===== hyprland (v2.5 Sector 6) =====
+hyprland|hyprland|hyprland|hyprland|hyprland|hyprland|hyprland|-|-|-|Hyprland compositor
+hyprlock|hyprland|hyprlock|hyprlock|hyprlock|hyprlock|hyprlock|-|-|-|Hyprland locker
+hypridle|hyprland|hypridle|hypridle|hypridle|hypridle|hypridle|-|-|-|Hyprland idle daemon
+xdg-desktop-portal-hyprland|hyprland|xdg-desktop-portal-hyprland|xdg-desktop-portal-hyprland|xdg-desktop-portal-hyprland|xdg-desktop-portal-hyprland|xdg-desktop-portal-hyprland|-|-|-|Hyprland portal
+wofi|hyprland|wofi|wofi|wofi|wofi|wofi|-|-|-|Launcher
+waybar|hyprland|waybar|waybar|waybar|waybar|waybar|-|-|-|Status bar
+dolphin|hyprland|dolphin|dolphin|dolphin|dolphin|dolphin|-|-|-|File manager
+# ===== GNOME (v2.5 Sector 2A) =====
+wl-clipboard|gnome|wl-clipboard|wl-clipboard|wl-clipboard|wl-clipboard|wl-clipboard|-|-|-|Wayland clipboard
+adw-gtk-theme|gnome|adw-gtk-theme|adw-gtk-theme|adw-gtk-theme|adw-gtk3-theme|-|-|-|-|libadwaita GTK3 theme
+gnome-shell-extension-clipboard-indicator|gnome|gnome-shell-extension-clipboard-indicator|gnome-shell-extension-clipboard-indicator|gnome-shell-extension-clipboard-indicator|-|-|-|-|-|Clipboard extension
+# ===== Hyprland default-config runtime deps (v3.0: v2.5 config referenced them without installing) =====
+network-manager-applet|hyprland|network-manager-applet|network-manager-gnome|network-manager-gnome|network-manager-applet|NetworkManager-applet|-|-|-|nm-applet tray
+polkit-gnome|hyprland|polkit-gnome|policykit-1-gnome|policykit-1-gnome|polkit-gnome|polkit-gnome|-|-|-|Polkit authentication agent
+brightnessctl|hyprland|brightnessctl|brightnessctl|brightnessctl|brightnessctl|brightnessctl|-|-|-|Backlight control (hypridle)

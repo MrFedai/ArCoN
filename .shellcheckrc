@@ -1,0 +1,6 @@
+# ArCoN v3.0 ShellCheck configuration
+# core/*.sh and platform/*.sh are sourced libraries: many variables are set in
+# one file and consumed in another (or by modules), which SC2034 cannot see.
+disable=SC2034
+# `. "$ARCON_ROOT/core/x.sh"` targets are resolved at runtime.
+external-sources=true
