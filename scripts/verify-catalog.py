@@ -17,6 +17,7 @@ is NOT_FOUND. Cells that could not be checked are reported as UNVERIFIED and
 never counted as PASS.
 
 Usage: scripts/verify-catalog.py [--only arch,brew] [--json out.json]
+       scripts/verify-catalog.py --offline   (structure only, no network)
 Environment: GITHUB_TOKEN (optional, raises GitHub rate limits)
 """
 import argparse
@@ -218,11 +219,43 @@ CHECKERS = {"arch": check_arch, "debian": check_debian, "ubuntu": check_ubuntu,
             "winget": check_winget, "flatpak": check_flatpak}
 
 
+def offline_check():
+    """Structure of data/packages.catalog; returns an exit code."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "packages.catalog")
+    errors, ids = [], set()
+    with open(path, encoding="utf-8") as f:
+        for n, line in enumerate(f, 1):
+            line = line.rstrip("\n")
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            cols = line.split("|")
+            if len(cols) != 11:
+                errors.append(f"line {n}: {len(cols)} fields (expected 11)")
+                continue
+            if cols[0] in ids:
+                errors.append(f"line {n}: duplicate id {cols[0]}")
+            ids.add(cols[0])
+            if not cols[1].strip():
+                errors.append(f"line {n}: no group")
+            if all(c.strip() == "-" for c in cols[2:10]):
+                errors.append(f"line {n}: {cols[0]} is not available on any platform")
+            if not cols[10].strip():
+                errors.append(f"line {n}: {cols[0]} has no description")
+    for e in errors:
+        print("CATALOG FAIL:", e)
+    print(f"catalog: {len(ids)} ids, {len(errors)} structural error(s)")
+    return 1 if errors else 0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default=",".join(CHECKERS))
     ap.add_argument("--json")
+    ap.add_argument("--offline", action="store_true",
+                    help="structural checks only (field count, unique ids, groups)")
     a = ap.parse_args()
+    if a.offline:
+        sys.exit(offline_check())
     rows = load_catalog()
     results = {}
     for col in a.only.split(","):

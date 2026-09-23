@@ -187,7 +187,7 @@ Describe 'ERROR: failures are reported, not hidden' {
     }
     It 'discards a download whose SHA256 does not match' {
         InModuleScope ArCoN {
-            Mock Invoke-WebRequest { param($Uri, $OutFile) 'tampered' | Set-Content -LiteralPath $OutFile }
+            Mock Invoke-WebRequest { param($OutFile) 'tampered' | Set-Content -LiteralPath $OutFile }
             $out = Join-Path $TestDrive 'dl.bin'
             Get-ArConFile -Uri 'https://example.com/dl.bin' -OutFile $out -Sha256 ('0' * 64) | Should -BeFalse
             Test-Path $out | Should -BeFalse

@@ -1,0 +1,139 @@
+# ArCoN v3.0 continuous integration.
+#
+# What each job CAN and CANNOT prove is documented in docs/TESTING.md:
+#  - lint:       static analysis only.
+#  - unit-linux: bats unit + integration tests with mocked package managers.
+#  - distro:     real package manager metadata of each distribution inside a
+#                container (dry-run resolves names against the real repositories).
+#                Containers have no systemd, desktop, GPU or kernel of their own,
+#                so nothing hardware-, desktop- or service-related is validated here.
+#  - windows:    Pester (mocked) + a real `setup.ps1 -DryRun` on the runner.
+#  - macos:      bats unit tests + a real `setup.sh --dry-run` with Homebrew.
+# No job applies changes to a real system: that is VM/NATIVE testing (docs/TESTING.md).
+name: CI
+
+on:
+  push:
+    branches: [main, v3.0]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: bash syntax
+        run: |
+          set -e
+          for f in setup.sh core/*.sh platform/*.sh platform/pkg/*.sh modules/*.sh tests/helpers/*.bash tests/mocks/bin/_arcon_mock tests/tools/*.sh; do
+            bash -n "$f"
+          done
+      - name: ShellCheck
+        run: |
+          shellcheck --version
+          shellcheck -x setup.sh core/*.sh platform/*.sh platform/pkg/*.sh modules/*.sh tests/helpers/common.bash tests/mocks/bin/_arcon_mock tests/tools/*.sh
+      - name: PowerShell syntax + PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          ./tests/tools/Test-PsSyntax.ps1
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -MinimumVersion 1.21
+          $r = @()
+          foreach ($p in './windows', './setup.ps1', './tests') {
+            $r += Invoke-ScriptAnalyzer -Path $p -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          }
+          $r | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize | Out-String -Width 250
+          if ($r.Count -gt 0) { throw "PSScriptAnalyzer: $($r.Count) finding(s)" }
+      - name: catalog integrity (offline)
+        run: python3 scripts/verify-catalog.py --offline
+      - name: documentation checks
+        run: tests/tools/check-docs.sh
+
+  unit-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install bats
+        run: sudo apt-get update -q && sudo apt-get install -y -q bats
+      - name: bats (unit + integration, mocked package managers)
+        run: bats --print-output-on-failure tests/bats
+
+  distro:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: arch,       image: "archlinux:latest",          prep: "pacman -Syu --noconfirm --needed bash git sudo bats which awk grep sed findutils diffutils procps-ng" }
+          - { name: debian,     image: "debian:stable",             prep: "apt-get update -q && apt-get install -y -q bash git sudo bats gawk procps" }
+          - { name: ubuntu,     image: "ubuntu:24.04",              prep: "apt-get update -q && apt-get install -y -q bash git sudo bats gawk procps" }
+          - { name: fedora,     image: "fedora:latest",             prep: "dnf -y install bash git sudo bats gawk which findutils diffutils procps-ng && dnf -y makecache" }
+          - { name: opensuse,   image: "opensuse/tumbleweed:latest", prep: "zypper -n refresh && zypper -n install bash git sudo bats gawk which findutils diffutils procps" }
+    container: ${{ matrix.image }}
+    name: distro (${{ matrix.name }})
+    steps:
+      - name: prepare container
+        run: ${{ matrix.prep }}
+      - uses: actions/checkout@v4
+      - name: create an unprivileged user with sudo (ArCoN expects a normal user)
+        run: |
+          useradd -m tester
+          echo 'tester ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/tester
+          chown -R tester "$GITHUB_WORKSPACE"
+      - name: bats unit tests
+        run: su tester -c "cd '$GITHUB_WORKSPACE' && bats --print-output-on-failure tests/bats/unit_*.bats"
+      - name: dry-run against the real package manager (profile full)
+        run: su tester -c "cd '$GITHUB_WORKSPACE' && ./setup.sh --dry-run --profile full -y --no-color" | tee dryrun.txt
+      - name: dry-run must not report unavailable packages silently
+        run: |
+          grep -E 'not available|UNAVAILABLE' dryrun.txt || true
+          grep -q 'DRY-RUN PLAN' dryrun.txt
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pester
+        shell: pwsh
+        run: |
+          Install-Module Pester -Force -Scope CurrentUser -MinimumVersion 5.5 -SkipPublisherCheck
+          $c = New-PesterConfiguration
+          $c.Run.Path = './tests/pester'
+          $c.Run.Exit = $true
+          $c.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $c
+      - name: winget availability (informational)
+        shell: pwsh
+        run: |
+          $w = Get-Command winget -ErrorAction SilentlyContinue
+          if ($w) { winget --version } else { Write-Output 'winget NOT available on this runner' }
+      - name: setup.ps1 -DryRun (real hardware detection, no changes)
+        shell: pwsh
+        run: ./setup.ps1 -DryRun -NonInteractive -Profile Minimal
+      - name: setup.ps1 -Version / -ShowConfig
+        shell: pwsh
+        run: |
+          ./setup.ps1 -Version
+          ./setup.ps1 -ShowConfig -NonInteractive
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: tools
+        run: brew install bash bats-core
+      - name: bats unit tests (bash from Homebrew)
+        run: bats --print-output-on-failure tests/bats/unit_*.bats
+      - name: setup.sh with the system bash 3.2 re-executes under Homebrew bash
+        run: /bin/bash ./setup.sh --version
+      - name: dry-run (profile minimal and developer)
+        run: |
+          ./setup.sh --dry-run --profile minimal -y --no-color
+          ./setup.sh --dry-run --profile developer -y --no-color

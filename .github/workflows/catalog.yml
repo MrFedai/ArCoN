@@ -1,0 +1,28 @@
+# Verifies data/packages.catalog against the official package indexes
+# (archlinux.org + AUR, Debian madison, Launchpad, Fedora mdapi, Repology,
+# formulae.brew.sh, winget-pkgs, Flathub). Network-dependent: runs weekly and
+# on demand, not on every push.
+name: Catalog verification
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: verify catalog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/verify-catalog.py --json catalog-report.json | tee catalog-report.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: catalog-report
+          path: catalog-report.*
