@@ -90,11 +90,16 @@ jobs:
       - name: bats unit tests
         run: su tester -c "cd '$GITHUB_WORKSPACE' && bats --print-output-on-failure tests/bats/unit_*.bats"
       - name: dry-run against the real package manager (profile full)
-        run: su tester -c "cd '$GITHUB_WORKSPACE' && ./setup.sh --dry-run --profile full -y --no-color" | tee dryrun.txt
-      - name: dry-run must not report unavailable packages silently
+        shell: bash
+        # pipefail: without it `| tee` hid a failing setup.sh (first CI run)
         run: |
-          grep -E 'not available|UNAVAILABLE' dryrun.txt || true
+          set -o pipefail
+          su tester -c "cd '$GITHUB_WORKSPACE' && ./setup.sh --dry-run --profile full -y --no-color" 2>&1 | tee dryrun.txt
+      - name: dry-run produced a plan; list packages reported unavailable (informational)
+        shell: bash
+        run: |
           grep -q 'DRY-RUN PLAN' dryrun.txt
+          grep -iE 'not available|unavailable' dryrun.txt || echo "no unavailable packages reported"
 
   windows:
     runs-on: windows-latest

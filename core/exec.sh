@@ -182,15 +182,29 @@ sha256_of() {
     else shasum -a 256 "$1" | awk '{print $1}'; fi
 }
 
+# net_online: 0 = reachable, 1 = not reachable, 2 = could not be checked.
+# Sets NET_CHECK_METHOD for the log. Minimal images (debian:stable, ubuntu:24.04)
+# ship neither curl nor wget; bash's /dev/tcp then checks DNS + TCP 443
+# (found in CI: the check reported "offline" on a machine that was online).
+NET_CHECK_METHOD=""
 net_online() {
-    # Real connectivity check (v2.5 printed "Internet: OK" without testing — bug #A-02).
-    local url
+    # Real connectivity check (v2.5 printed "Internet: OK" without testing — bug D-01).
+    local url host method=""
+    if command -v curl >/dev/null 2>&1; then method=curl
+    elif command -v wget >/dev/null 2>&1; then method=wget
+    elif command -v timeout >/dev/null 2>&1; then method=devtcp
+    fi
+    NET_CHECK_METHOD="${method:-none}"
+    [[ -n "$method" ]] || return 2
     for url in $(cfg NET_CHECK_URLS "https://github.com https://archlinux.org https://www.debian.org"); do
-        if command -v curl >/dev/null 2>&1; then
-            curl -fsS -o /dev/null --max-time 8 --head "$url" 2>/dev/null && return 0
-        elif command -v wget >/dev/null 2>&1; then
-            wget -q --spider --timeout=8 "$url" 2>/dev/null && return 0
-        fi
+        case "$method" in
+            curl) curl -fsS -o /dev/null --max-time 8 --head "$url" 2>/dev/null && return 0 ;;
+            wget) wget -q --spider --timeout=8 "$url" 2>/dev/null && return 0 ;;
+            devtcp)
+                host="${url#*://}"; host="${host%%/*}"
+                # shellcheck disable=SC2016  # $1 is expanded by the inner bash
+                timeout 8 bash -c 'exec 3<>"/dev/tcp/$1/443"' _ "$host" 2>/dev/null && return 0 ;;
+        esac
     done
     return 1
 }

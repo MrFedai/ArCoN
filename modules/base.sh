@@ -14,84 +14,33 @@
 
 ARCON_MODULE=base
 
-preflight_run() {
-    ARCON_MODULE=preflight
-    local ok=1
-    ui_section "Pre-flight checks"
+# Pre-flight helpers called by arcon_preflight (core/main.sh). The first v3
+# draft had a second, complete preflight here that was never called, so the
+# live-environment and pacman-lock checks silently did not run (found in review).
 
-    # 1. network (real)
-    if net_online; then log_result "internet connection" PASS
+# v2.5 Live-USB check (was commented out in v2.5)
+base_preflight_live() {
+    [[ "${HW_IS_LIVE:-no}" == yes ]] || return 0
+    log_warn "LIVE ENVIRONMENT DETECTED — all changes are lost after reboot"
+    is_dry_run && return 0
+    ui_confirm "Continue anyway (NOT RECOMMENDED)" n || die 0 "cancelled on live environment"
+}
+
+# v2.5 removed a stale pacman lock silently; v3.0 asks (PACMAN_STALE_LOCK=ask|remove|abort)
+base_preflight_pacman_lock() {
+    is_arch || return 0
+    [[ -f "${ARCON_SYSROOT}/var/lib/pacman/db.lck" ]] || return 0
+    if pgrep -x pacman >/dev/null 2>&1; then
+        log_result "pacman lock" FAIL "pacman is running in another process"
+        return 1
+    fi
+    local mode; mode="$(cfg PACMAN_STALE_LOCK ask)"
+    if [[ "$mode" == remove ]] || { [[ "$mode" == ask ]] && ui_confirm "Stale pacman lock found (no pacman running). Remove /var/lib/pacman/db.lck" y; }; then
+        x_root FILE "remove stale pacman lock" -- rm -f "${ARCON_SYSROOT}/var/lib/pacman/db.lck"
     else
-        if cfg_bool REQUIRE_NETWORK yes && ! is_dry_run; then
-            log_result "internet connection" FAIL "no HTTPS connectivity to $(cfg NET_CHECK_URLS)"
-            log_error "suggestion: check cable/Wi-Fi, DNS and proxy settings, or use --set REQUIRE_NETWORK=no for offline dry-runs"
-            ok=0
-        else
-            log_warn "no internet connectivity detected (continuing: dry-run or REQUIRE_NETWORK=no)"
-        fi
+        log_result "pacman lock" FAIL "stale lock kept (PACMAN_STALE_LOCK=$mode)"
+        return 1
     fi
-
-    # 2. disk space (v2.5: 10 GB)
-    local min free; min="$(cfg MIN_DISK_GB 10)"; free="${HW_DISK_FREE_GB:-0}"
-    if [[ "$free" =~ ^[0-9]+$ ]] && (( free >= min )); then log_result "disk space" PASS "${free} GB free (min ${min} GB)"
-    else
-        log_result "disk space" FAIL "${free} GB free, ${min} GB required"
-        is_dry_run || ok=0
-    fi
-
-    # 3. privileges
-    if is_root; then
-        if [[ -z "${SUDO_USER:-}" ]]; then
-            log_warn "running as root without sudo: user-level configs go to $HOME and AUR/Homebrew steps will fail"
-        fi
-        log_result "privileges" PASS "root"
-    elif is_dry_run; then
-        log_result "privileges" SKIP "dry-run does not need sudo"
-    elif command -v sudo >/dev/null 2>&1 && sudo -v; then
-        log_result "privileges" PASS "sudo"
-        sudo_keepalive_start
-    else
-        log_result "privileges" FAIL "sudo is required (run: sudo -v)"
-        ok=0
-    fi
-
-    # 4. OS support tier
-    case "$OS_SUPPORT" in
-        tested) log_result "operating system" PASS "$OS_NAME" ;;
-        experimental) log_warn "$OS_NAME is not one of the CI-tested distributions — treated as $OS_ID (experimental)" ;;
-        *) log_result "operating system" FAIL "$OS_NAME is not supported"; ok=0 ;;
-    esac
-
-    # 5. architecture
-    case "$HW_ARCH" in
-        x86_64|amd64|aarch64|arm64) ;;
-        *) log_warn "architecture $HW_ARCH is untested; many packages (e.g. Steam, Chrome) are x86_64-only" ;;
-    esac
-
-    # 6. live environment (v2.5 check was commented out)
-    if [[ "$HW_IS_LIVE" == yes ]]; then
-        log_warn "LIVE ENVIRONMENT DETECTED — all changes are lost after reboot"
-        if ! is_dry_run && ! ui_confirm "Continue anyway (NOT RECOMMENDED)" n; then
-            die 0 "cancelled on live environment"
-        fi
-    fi
-
-    # 7. pacman lock (v2.5 behaviour, now confirmed)
-    if is_arch && [[ -f "${ARCON_SYSROOT}/var/lib/pacman/db.lck" ]]; then
-        if pgrep -x pacman >/dev/null 2>&1; then
-            log_result "pacman lock" FAIL "pacman is running in another process"; ok=0
-        else
-            local mode; mode="$(cfg PACMAN_STALE_LOCK ask)"
-            if [[ "$mode" == remove ]] || { [[ "$mode" == ask ]] && ui_confirm "Stale pacman lock found (no pacman running). Remove /var/lib/pacman/db.lck" y; }; then
-                x_root FILE "remove stale pacman lock" -- rm -f /var/lib/pacman/db.lck
-            else
-                log_result "pacman lock" FAIL "stale lock kept"; ok=0
-            fi
-        fi
-    fi
-
-    ARCON_MODULE=base
-    (( ok == 1 ))
 }
 
 # ----------------------------------------------------------------- wizard

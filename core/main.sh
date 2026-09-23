@@ -113,10 +113,28 @@ arcon_preflight() {
         [[ "${ARCON_INTERACTIVE}" == "1" ]] && { ui_confirm "Continue with low disk space" n || return 1; }
     fi
 
-    if ! net_online; then
-        log_error "no internet connectivity (checked DNS + HTTPS) — package operations would fail"
-        [[ "${ARCON_INTERACTIVE}" == "1" ]] && ui_confirm "Continue offline anyway (most tasks will fail)" n || problems=$((problems + 1))
-    fi
+    local net_rc=0
+    net_online || net_rc=$?
+    case "$net_rc" in
+        0) log_result "internet connection" PASS "HTTPS reachable ($NET_CHECK_METHOD)" ;;
+        2) log_warn "internet connectivity could not be checked (no curl, wget or timeout available)" ;;
+        *)
+            if is_dry_run || ! cfg_bool REQUIRE_NETWORK; then
+                log_warn "no internet connectivity detected via $NET_CHECK_METHOD (continuing: dry-run or REQUIRE_NETWORK=no)"
+            else
+                log_result "internet connection" FAIL "no connection to $(cfg NET_CHECK_URLS) via $NET_CHECK_METHOD"
+                log_error "check cable/Wi-Fi, DNS and proxy settings, or use --set REQUIRE_NETWORK=no"
+                if [[ "${ARCON_INTERACTIVE}" == "1" ]] && ui_confirm "Continue offline anyway (most tasks will fail)" n; then
+                    :
+                else
+                    problems=$((problems + 1))
+                fi
+            fi
+            ;;
+    esac
+
+    base_preflight_live || return 1
+    base_preflight_pacman_lock || problems=$((problems + 1))
 
     if [[ "${HW_POWER:-unknown}" == battery ]]; then
         log_warn "the machine is running on battery; a long installation may be interrupted"
