@@ -38,7 +38,7 @@ mod_shell_wizard() {
             ui_choose p "$(cfg SHELL_STARSHIP_PRESET default)" "=== STARSHIP PRESET ===" "${opts[@]}"
             cfg_set SHELL_STARSHIP_PRESET "$p" wizard ;;
     esac
-    [[ "$choice" != skip ]] && { ui_confirm "Set $choice as your default login shell" y && cfg_set SHELL_CHSH yes wizard || cfg_set SHELL_CHSH no wizard; }
+    if [[ "$choice" != skip ]]; then ui_confirm_set SHELL_CHSH y "Set $choice as your default login shell"; fi
     return 0
 }
 
@@ -159,6 +159,7 @@ shell_fish_cfg() {
 }
 
 shell_bash_cfg() {
+    # shellcheck disable=SC2016  # the line is written literally into ~/.bashrc
     fs_append_once "$ARCON_HOME/.bashrc" 'eval "$(starship init bash)"' || return 1
     shell_starship_preset
 }
@@ -179,7 +180,10 @@ shell_chsh() {
     local t path cur
     t="$(cfg SHELL_TARGET)"
     path="$(command -v "$t" 2>/dev/null)"
-    [[ -n "$path" ]] || { is_dry_run && path="/usr/bin/$t" || { log_error "$t not found in PATH after installation"; return 1; }; }
+    if [[ -z "$path" ]]; then
+        if is_dry_run; then path="/usr/bin/$t"   # not installed yet: plan with the usual path
+        else log_error "$t not found in PATH after installation"; return 1; fi
+    fi
     cur="$(getent passwd "$ARCON_USER" 2>/dev/null | cut -d: -f7)"
     [[ -n "$cur" ]] || cur="$(dscl . -read "/Users/$ARCON_USER" UserShell 2>/dev/null | awk '{print $2}')"
     if [[ "$cur" == "$path" ]]; then log_info "$ARCON_USER already uses $path"; return 0; fi

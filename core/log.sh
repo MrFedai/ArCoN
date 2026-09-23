@@ -88,10 +88,11 @@ log_error() { _log_emit ERROR '1;31' "$@"; }
 log_result() {
     local op="$1" status="$2"; shift 2 || true
     local detail="${*:-}"
-    [[ -n "$_ARCON_LOG_FILE" ]] &&
+    if [[ -n "$_ARCON_LOG_FILE" ]]; then
         printf '%s [RESULT] [%s] op=%s status=%s detail=%s\n' \
             "$(date -Iseconds 2>/dev/null || date)" "${ARCON_MODULE:-core}" "$op" "$status" "$detail" \
             >> "$_ARCON_LOG_FILE" 2>/dev/null || true
+    fi
     case "$status" in
         PASS|OK)   log_info  "✓ $op${detail:+ — $detail}" ;;
         SKIP)      log_info  "· $op skipped${detail:+ — $detail}" ;;

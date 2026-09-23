@@ -10,6 +10,13 @@
 _ARCON_CLI_SH=1
 
 ARCON_VERSION="3.0.0"
+# arcon_profiles <sep> -> shipped profile names joined by <sep>
+arcon_profiles() {
+    local f out=""
+    for f in "$ARCON_ROOT"/profiles/*.conf; do [[ -e "$f" ]] && out="${out:+$out$1}$(basename "$f" .conf)"; done
+    printf '%s' "$out"
+}
+
 ARCON_MODE=install          # install | reset | rollback | list-runs | show-config | plan-only
 ARCON_PROFILE=""
 ARCON_USER_CONFIG=""
@@ -31,7 +38,7 @@ Usage: ./setup.sh [options]
 
 Modes
   (no options)              interactive wizard (v2.5 behaviour)
-  --profile NAME            use a profile: $(ls -1 "$ARCON_ROOT/profiles" 2>/dev/null | sed 's/\.conf$//' | paste -sd '|' -)
+  --profile NAME            use a profile: $(arcon_profiles '|')
   --dry-run                 show everything that would change, change nothing
   --resume                  continue the last interrupted run
   --rollback [RUN_ID]       undo the changes of a run (default: last run)
@@ -120,7 +127,7 @@ cli_load_config() {
     cfg_load_file "$ARCON_ROOT/config/platform/${OS_FAMILY}.conf" "platform/$OS_FAMILY" || die 2 "cannot load platform config"
     if [[ -n "$ARCON_PROFILE" ]]; then
         local pf="$ARCON_ROOT/profiles/${ARCON_PROFILE}.conf"
-        [[ -f "$pf" ]] || die 2 "unknown profile '$ARCON_PROFILE' (available: $(ls -1 "$ARCON_ROOT/profiles" | sed 's/\.conf$//' | paste -sd ',' -))"
+        [[ -f "$pf" ]] || die 2 "unknown profile '$ARCON_PROFILE' (available: $(arcon_profiles ','))"
         cfg_load_file "$pf" "profile/$ARCON_PROFILE" 1 || die 2 "cannot load profile"
     fi
     cfg_load_file "${XDG_CONFIG_HOME:-$ARCON_HOME/.config}/arcon/arcon.conf" user || die 2 "cannot load user config"

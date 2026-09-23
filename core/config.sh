@@ -108,7 +108,7 @@ cfg_list_has() {
 }
 
 # cfg_list <KEY> -> one item per line
-cfg_list() { printf '%s\n' "$(cfg "$1")" | tr ', ' '\n\n' | sed '/^$/d'; }
+cfg_list() { printf '%s\n' "$(cfg "$1")" | tr ',' ' ' | tr -s ' ' '\n' | sed '/^$/d'; }
 
 # cfg_dump [file] -> write effective config (used by resume)
 cfg_dump() {

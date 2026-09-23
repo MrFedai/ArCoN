@@ -26,13 +26,11 @@ SSHD_DROPIN=/etc/ssh/sshd_config.d/00-arcon-hardening.conf
 SYSCTL_FILE=/etc/sysctl.d/99-security.conf
 
 mod_security_wizard() {
-    ui_confirm "Install security tools (arch-audit, clamav, rkhunter, lynis, firejail, nethogs)" y &&
-        cfg_set SEC_TOOLS yes wizard || cfg_set SEC_TOOLS no wizard
-    ui_confirm "Enable the firewall (deny incoming, allow outgoing)" y &&
-        cfg_set SEC_FIREWALL yes wizard || cfg_set SEC_FIREWALL no wizard
+    ui_confirm_set SEC_TOOLS y "Install security tools (arch-audit, clamav, rkhunter, lynis, firejail, nethogs)"
+    ui_confirm_set SEC_FIREWALL y "Enable the firewall (deny incoming, allow outgoing)"
     security_dashboard
     ui_say "\n${DIM}(Scans run arch-audit, Lynis, ClamAV home scan and rkhunter sequentially — this can take a long time)${NC}"
-    ui_confirm "Start security scans" n && cfg_set SEC_SCAN yes wizard || cfg_set SEC_SCAN no wizard
+    ui_confirm_set SEC_SCAN n "Start security scans"
 
     ui_say "\n${BOLD}Proposed hardening plan:${NC}"
     ui_say "   ${CYAN}1. System update:${NC}      patch vulnerable packages"
@@ -51,7 +49,7 @@ mod_security_wizard() {
     ui_say "${CYAN}2. USBGuard (physical port security):${NC}"
     ui_say "   ${GREEN}[+]${NC} prevents BadUSB attacks, blocks unauthorized devices"
     ui_say "   ${RED}[-]${NC} new USB devices stay blocked until you allow them manually"
-    ui_confirm "Activate Hardened Mode" n && cfg_set SEC_HARDENED_MODE yes wizard || cfg_set SEC_HARDENED_MODE no wizard
+    ui_confirm_set SEC_HARDENED_MODE n "Activate Hardened Mode"
     return 0
 }
 
@@ -118,7 +116,8 @@ security_firewall_ufw() {
     fi
     rb_add SERVICE ufw "$(systemctl is-enabled ufw 2>/dev/null || echo absent)"
     x_root SERVICE "enable ufw" -- ufw --force enable || return 1
-    ufw status | head -n1 | grep -q active && log_result "firewall (ufw)" PASS || { log_result "firewall (ufw)" FAIL; return 1; }
+    # `ufw status` needs root; "Status: inactive" must not match (v3 pre-release bug found in review)
+    if as_root ufw status 2>/dev/null | head -n1 | grep -qx "Status: active"; then log_result "firewall (ufw)" PASS; else log_result "firewall (ufw)" FAIL; return 1; fi
 }
 
 security_firewall_firewalld() {
@@ -126,7 +125,7 @@ security_firewall_firewalld() {
     is_dry_run && { plan_record SERVICE "firewalld: enable, default zone target DROP for incoming"; return 0; }
     rb_add SERVICE firewalld "$(systemctl is-enabled firewalld 2>/dev/null || echo absent)"
     x_root SERVICE "enable firewalld" -- systemctl enable --now firewalld || return 1
-    firewall-cmd --state >/dev/null 2>&1 && log_result "firewall (firewalld)" PASS "default zone: $(firewall-cmd --get-default-zone 2>/dev/null)" || { log_result "firewall (firewalld)" FAIL; return 1; }
+    if as_root firewall-cmd --state >/dev/null 2>&1; then log_result "firewall (firewalld)" PASS "default zone: $(as_root firewall-cmd --get-default-zone 2>/dev/null)"; else log_result "firewall (firewalld)" FAIL; return 1; fi
 }
 
 security_firewall_macos() {
@@ -178,7 +177,7 @@ security_scan() {
 
 security_sysctl() {
     if ! is_linux; then log_warn "sysctl hardening: Linux only"; return "$TASK_SKIP"; fi
-    fs_write "$SYSCTL_FILE" root 0644 <<'EOF'
+    fs_write "$SYSCTL_FILE" root 0644 <<'EOF' || return 1
 # Managed by ArCoN v3.0 (modules/security.sh). Remove this file to revert.
 # KERNEL SECURITY
 kernel.dmesg_restrict = 1
@@ -194,11 +193,10 @@ net.ipv4.conf.default.accept_redirects = 0
 net.ipv4.conf.default.accept_source_route = 0
 net.ipv6.conf.all.accept_redirects = 0
 EOF
-    [[ $? -eq 0 ]] || return 1
     x_root SETTING "reload sysctl settings" -- sysctl --system || return 1
     is_dry_run && return 0
     local v; v="$(sysctl -n kernel.kptr_restrict 2>/dev/null)"
-    [[ "$v" == 2 ]] && log_result "sysctl hardening" PASS "kernel.kptr_restrict=$v" || { log_result "sysctl hardening" FAIL "kernel.kptr_restrict=$v"; return 1; }
+    if [[ "$v" == 2 ]]; then log_result "sysctl hardening" PASS "kernel.kptr_restrict=$v"; else log_result "sysctl hardening" FAIL "kernel.kptr_restrict=$v"; return 1; fi
 }
 
 security_ssh() {
@@ -210,12 +208,11 @@ security_ssh() {
     fi
     local pw="yes"; cfg_bool SEC_SSH_DISABLE_PASSWORD && pw="no"
     [[ "$pw" == no ]] && log_warn "password authentication will be DISABLED — make sure your public key is in ~/.ssh/authorized_keys"
-    fs_write "$SSHD_DROPIN" root 0600 <<EOF
+    fs_write "$SSHD_DROPIN" root 0600 <<EOF || return 1
 # Managed by ArCoN v3.0 (modules/security.sh). Delete this file to revert.
 PermitRootLogin no
 PasswordAuthentication $pw
 EOF
-    [[ $? -eq 0 ]] || return 1
     if ! is_dry_run; then
         if ! as_root sshd -t 2>&1 | tee -a "$(log_file)"; then
             log_error "sshd rejected the new configuration — reverting $SSHD_DROPIN"

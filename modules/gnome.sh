@@ -29,7 +29,7 @@ mod_gnome_wizard() {
     else
         cfg_set GNOME_APPLY no wizard
     fi
-    ui_confirm "Remove GNOME Bloatware (${GNOME_BLOAT[*]})" n && cfg_set GNOME_DEBLOAT yes wizard || cfg_set GNOME_DEBLOAT no wizard
+    ui_confirm_set GNOME_DEBLOAT n "Remove GNOME Bloatware (${GNOME_BLOAT[*]})"
     return 0
 }
 
@@ -76,10 +76,11 @@ gnome_apply() {
     dconf dump / > "$dump" || { log_error "dconf backup failed — not applying settings"; return 1; }
     rb_add DCONF / "$dump"
     x_run SETTING "reset GNOME app folders" -- dconf reset -f /org/gnome/desktop/app-folders/ || return 1
+    # shellcheck disable=SC2016  # positional args of the inner sh, intentionally literal
     x_run SETTING "load gno.conf" -- sh -c 'dconf load / < "$1"' _ "$rendered" || { log_error "gno.conf rejected by dconf (syntax?) — restore with: ./setup.sh --rollback"; return 1; }
     # verify one representative key
     local got; got="$(dconf read /org/gnome/desktop/interface/gtk-theme 2>/dev/null)"
-    [[ "$got" == "'adw-gtk3-dark'" ]] && log_result "GNOME settings" PASS "gtk-theme=$got" || { log_result "GNOME settings" FAIL "gtk-theme=$got"; return 1; }
+    if [[ "$got" == "'adw-gtk3-dark'" ]]; then log_result "GNOME settings" PASS "gtk-theme=$got"; else log_result "GNOME settings" FAIL "gtk-theme=$got"; return 1; fi
 }
 
 gnome_debloat() {

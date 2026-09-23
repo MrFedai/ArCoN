@@ -110,7 +110,9 @@ opt_fstrim_timer() {
     systemctl is-enabled fstrim.timer >/dev/null 2>&1 && { log_info "fstrim.timer already enabled"; return 0; }
     rb_add SERVICE fstrim.timer "$(systemctl is-enabled fstrim.timer 2>/dev/null || echo absent)"
     x_root OPTIMIZE "enable fstrim.timer (weekly TRIM)" -- systemctl enable --now fstrim.timer || return 1
-    is_dry_run || { systemctl is-enabled fstrim.timer >/dev/null 2>&1 && log_result "fstrim.timer" PASS || { log_result "fstrim.timer" FAIL; return 1; }; }
+    is_dry_run && return 0
+    if systemctl is-enabled fstrim.timer >/dev/null 2>&1; then log_result "fstrim.timer" PASS
+    else log_result "fstrim.timer" FAIL; return 1; fi
 }
 
 opt_bluetooth_autoenable() {
@@ -129,17 +131,16 @@ opt_zram() {
         log_info "zram swap is already active — not changing it"; return 0
     fi
     pkg_install_ids zram-generator || return 1
-    fs_write /etc/systemd/zram-generator.conf root 0644 <<'EOF'
+    fs_write /etc/systemd/zram-generator.conf root 0644 <<'EOF' || return 1
 # Managed by ArCoN v3.0. Delete this file to disable zram.
 [zram0]
 zram-size = min(ram, 8192)
 compression-algorithm = zstd
 EOF
-    [[ $? -eq 0 ]] || return 1
     x_root OPTIMIZE "reload systemd generators" -- systemctl daemon-reload || return 1
     x_root OPTIMIZE "start systemd-zram-setup@zram0.service" -- systemctl start systemd-zram-setup@zram0.service || return 1
     is_dry_run && return 0
-    swapon --show=NAME --noheadings | grep -q zram && log_result "zram" PASS "$(swapon --show=NAME,SIZE --noheadings | grep zram | tr -s ' ')" || { log_result "zram" FAIL "no zram device active"; return 1; }
+    if swapon --show=NAME --noheadings | grep -q zram; then log_result "zram" PASS "$(swapon --show=NAME,SIZE --noheadings | grep zram | tr -s ' ')"; else log_result "zram" FAIL "no zram device active"; return 1; fi
 }
 
 opt_swappiness_report() {
@@ -255,7 +256,8 @@ opt_brew_cleanup()       { x_user OPTIMIZE "brew cleanup --prune=30" -- brew cle
 opt_launch_items_report() {
     is_dry_run && { plan_record OPTIMIZE "list third-party launch agents/daemons (read-only)"; return 0; }
     ui_say "  ${BOLD}third-party launch items:${NC}"
-    ls -1 /Library/LaunchAgents /Library/LaunchDaemons "$ARCON_HOME/Library/LaunchAgents" 2>/dev/null | sed 's/^/    /' | head -n 30
+    find /Library/LaunchAgents /Library/LaunchDaemons "$ARCON_HOME/Library/LaunchAgents" \
+        -mindepth 1 -maxdepth 1 -name '*.plist' 2>/dev/null | sed 's/^/    /' | head -n 30
     return 0
 }
 opt_power_report() {

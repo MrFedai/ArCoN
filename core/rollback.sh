@@ -84,7 +84,8 @@ rollback_run() {
                     x_root SERVICE "disable $a (was $b)" -- systemctl disable --now "$a"
                 else true; fi ;;
             DCONF)
-                x_run SETTING "restore dconf $a" -- sh -c 'dconf reset -f "$1" && dconf load "$1" < "$2"' _ "$a" "$b" ;;
+                # shellcheck disable=SC2016  # positional args of the inner sh, intentionally literal
+            x_run SETTING "restore dconf $a" -- sh -c 'dconf reset -f "$1" && dconf load "$1" < "$2"' _ "$a" "$b" ;;
             SHELL)
                 x_root SETTING "restore login shell of $a to $b" -- chsh -s "$b" "$a" ;;
             POWER)

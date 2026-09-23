@@ -274,3 +274,16 @@ Describe 'NATIVE: real Windows host' -Tag 'Windows' -Skip:(-not $IsWindows) {
         ($out -join "`n") | Should -Match 'DRY-RUN PLAN'
     }
 }
+
+Describe 'Optimization catalog parity (Windows)' -Tag 'Unit' {
+    It 'every Windows catalog row has a task in Modules.ps1 and vice versa' {
+        $root = Resolve-Path (Join-Path $PSScriptRoot '../..')
+        $catalog = Get-Content (Join-Path $root 'data/optimizations.catalog') |
+            Where-Object { $_ -and $_ -notmatch '^\s*#' } |
+            ForEach-Object { $f = $_ -split '\|'; if ($f[2] -eq 'windows') { $f[0] } } | Sort-Object
+        $src = Get-Content -Raw (Join-Path $root 'windows/ArCoN/Private/Modules.ps1')
+        $tasks = [regex]::Matches($src, "Add-ArConTask -Id '(?:optimize|gaming)\.([a-z_]+)'") |
+            ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
+        $catalog | Should -Be $tasks
+    }
+}

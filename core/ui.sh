@@ -141,3 +141,11 @@ ui_table() {
                     sub(/ +$/, "", out); print out } }'
     fi
 }
+
+# ui_confirm_set <KEY> <default y|n> <question>
+# Ask a yes/no question and store yes|no in the config (wizard layer).
+ui_confirm_set() {
+    local key="$1" def="$2"; shift 2
+    if ui_confirm "$*" "$def"; then cfg_set "$key" yes wizard; else cfg_set "$key" no wizard; fi
+    return 0
+}

@@ -31,8 +31,7 @@ mod_packages_wizard() {
     cfg_set PKG_GROUPS "$(IFS=,; printf '%s' "${sel[*]}")" wizard
     local custom; custom="$(pkg_custom_file)"
     if [[ -n "$custom" ]]; then
-        ui_confirm "Load custom packages from $(basename "$custom") ($(pkg_custom_list | wc -l | tr -d ' ') entries)" y &&
-            cfg_set PKG_USE_CUSTOM yes wizard || cfg_set PKG_USE_CUSTOM no wizard
+        ui_confirm_set PKG_USE_CUSTOM y "Load custom packages from $(basename "$custom") ($(pkg_custom_list | wc -l | tr -d ' ') entries)"
     fi
     return 0
 }
@@ -56,7 +55,7 @@ pkg_selected_ids() {
     {
         for g in $(cfg PKG_GROUPS | tr ',' ' '); do catalog_group "$g"; done
         if [[ "$(cfg PKG_USE_CUSTOM ask)" == yes ]]; then pkg_custom_list; fi
-        cfg PKG_EXTRA | tr ', ' '\n\n'
+        cfg_list PKG_EXTRA
     } | awk 'NF && !seen[$0]++'
 }
 

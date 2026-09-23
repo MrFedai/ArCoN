@@ -40,3 +40,19 @@ CAT="$BATS_TEST_DIRNAME/../../data/packages.catalog"
     run pkg_resolve vlc does-not-exist
     [[ "$output" == *UNAVAILABLE*does-not-exist* ]] || [[ "$output" == *does-not-exist* ]]
 }
+
+@test "optimization catalog: unique ids, 9 fields, and every Linux/macOS item is implemented" {
+    local OCAT="$ARCON_REPO/data/optimizations.catalog" id
+    run bash -c "awk -F'|' '!/^#/ && NF {print \$1}' '$OCAT' | sort | uniq -d"
+    [ -z "$output" ]
+    run awk -F'|' '!/^#/ && NF && NF != 9 {print NR": "$1}' "$OCAT"
+    [ -z "$output" ]
+    for id in $(awk -F'|' '!/^#/ && NF && $3 != "windows" {print $1}' "$OCAT"); do
+        grep -q "^opt_${id}()" "$ARCON_REPO/modules/optimize.sh" || { echo "no implementation for $id"; return 1; }
+    done
+}
+
+@test "optimization catalog: no high-risk item is enabled by a profile" {
+    run awk -F'|' '!/^#/ && NF && $4 == "high" && $5 != "custom" {print $1}' "$ARCON_REPO/data/optimizations.catalog"
+    [ -z "$output" ]
+}

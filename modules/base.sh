@@ -9,7 +9,7 @@
 #                                                               full reset opt-in (BASE_GPG_RESET)
 #   * reflector saved over mirrorlist without backup          → backup + rollback
 #   * `pacman -Sy` partial upgrades                           → -Syu only
-#   * yay-bin build in the repo directory, `cd` leaked        → temp dir, subshell
+#   * yay-bin cloned and built in the repo directory         → temp dir, subshell
 #   * Debian/Ubuntu only besides Arch                         → + Fedora, openSUSE, macOS
 
 ARCON_MODULE=base
@@ -96,9 +96,9 @@ preflight_run() {
 
 # ----------------------------------------------------------------- wizard
 mod_base_wizard() {
-    ui_confirm "Update Base System (Mirrors/Keyrings)" y && cfg_set BASE_UPGRADE yes wizard || cfg_set BASE_UPGRADE no wizard
+    ui_confirm_set BASE_UPGRADE y "Update Base System (Mirrors/Keyrings)"
     if is_arch && cfg_bool BASE_UPGRADE; then
-        ui_confirm "Benchmark and rank Arch mirrors with reflector" y && cfg_set BASE_MIRRORS yes wizard || cfg_set BASE_MIRRORS no wizard
+        ui_confirm_set BASE_MIRRORS y "Benchmark and rank Arch mirrors with reflector"
         if ui_confirm "Emergency keyring reset (wipes /etc/pacman.d/gnupg — only if pacman reports GPG errors)" n; then
             cfg_set BASE_GPG_RESET yes wizard
         fi
@@ -233,7 +233,7 @@ base_speedtest() {
     bps="$(curl -s -o /dev/null -w '%{speed_download}' --connect-timeout 5 --max-time 8 'https://speed.cloudflare.com/__down?bytes=10000000' 2>/dev/null)"
     kb="$(awk -v b="${bps:-0}" 'BEGIN{printf "%d", b/1024}')"
     ui_say "${BOLD}>> Current download speed: ${kb} KB/s${NC}"
-    (( kb < 500 )) && log_warn "connection seems slow (<500 KB/s)" || log_info "connection speed is good"
+    if (( kb < 500 )); then log_warn "connection seems slow (<500 KB/s)"; else log_info "connection speed is good"; fi
     return 0
 }
 

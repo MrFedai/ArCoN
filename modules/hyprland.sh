@@ -146,6 +146,6 @@ hyprland_theme() {
     rb_add NOTE "third-party Hyprland theme '$theme' ($repo@$commit) made changes ArCoN cannot roll back; previous ~/.config/hypr is in the run backup"
     ( cd "$(dirname "$script")" && as_user bash "./$(basename "$script")" )
     local rc=$?
-    (( rc == 0 )) && log_result "Hyprland theme $theme" PASS || log_result "Hyprland theme $theme" FAIL "installer exit $rc"
+    if (( rc == 0 )); then log_result "Hyprland theme $theme" PASS; else log_result "Hyprland theme $theme" FAIL "installer exit $rc"; fi
     return $rc
 }

@@ -11,6 +11,7 @@
 #
 # Mock backend: ARCON_HW_MOCK=<file with KEY=VALUE lines> (tests/fixtures/hw/*.env)
 # Linux backend reads sysfs/procfs under ARCON_SYSROOT so fixtures can emulate
+# (fixture PCI dirs use "_" instead of ":" so the repo checks out on Windows)
 # NVIDIA/AMD/Intel/unknown GPUs without physical hardware.
 
 [[ -n "${_ARCON_HW_SH:-}" ]] && return 0
@@ -123,10 +124,11 @@ _hw_linux() {
 
     # Secure Boot (EFI variable: last byte 1 = enabled)
     local sb
-    sb="$(ls "$S"/sys/firmware/efi/efivars/SecureBoot-* 2>/dev/null | head -n1)"
+    local -a sbv=("$S"/sys/firmware/efi/efivars/SecureBoot-*)
+    sb=""; [[ -e "${sbv[0]}" ]] && sb="${sbv[0]}"
     if [[ ! -d "$S/sys/firmware/efi" ]]; then HW_SECUREBOOT=unsupported-bios
     elif [[ -n "$sb" && -r "$sb" ]]; then
-        [[ "$(od -An -t u1 "$sb" 2>/dev/null | awk '{print $NF}')" == 1 ]] && HW_SECUREBOOT=enabled || HW_SECUREBOOT=disabled
+        if [[ "$(od -An -t u1 "$sb" 2>/dev/null | awk '{print $NF}')" == 1 ]]; then HW_SECUREBOOT=enabled; else HW_SECUREBOOT=disabled; fi
     else HW_SECUREBOOT=unknown; fi
 
     # Laptop (battery present) and current power source

@@ -134,11 +134,16 @@ sudo_keepalive_start() {
     is_dry_run && return 0
     is_root && return 0
     command -v sudo >/dev/null 2>&1 || return 0
-    ( while kill -0 "$$" 2>/dev/null; do sudo -n true 2>/dev/null; sleep 50; done ) &
+    # fds detached: a lingering `sleep` must not keep the caller's stdout pipe open
+    # (found in tests: every run waited up to 50 s for EOF after ArCoN had exited)
+    ( while kill -0 "$$" 2>/dev/null; do sudo -n true 2>/dev/null; sleep 50; done ) </dev/null >/dev/null 2>&1 &
     _ARCON_SUDO_KEEPALIVE_PID=$!
 }
 sudo_keepalive_stop() {
-    [[ -n "$_ARCON_SUDO_KEEPALIVE_PID" ]] && kill "$_ARCON_SUDO_KEEPALIVE_PID" 2>/dev/null
+    if [[ -n "$_ARCON_SUDO_KEEPALIVE_PID" ]]; then
+        pkill -P "$_ARCON_SUDO_KEEPALIVE_PID" 2>/dev/null   # the sleep child
+        kill "$_ARCON_SUDO_KEEPALIVE_PID" 2>/dev/null
+    fi
     _ARCON_SUDO_KEEPALIVE_PID=""
 }
 

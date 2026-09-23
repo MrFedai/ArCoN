@@ -27,9 +27,11 @@ launch_items_report|startup|macos|low|minimal,balanced,performance,gaming,develo
 power_report|power|macos|low|minimal,balanced,performance,gaming,developer,security|Report pmset settings (sleep, lowpowermode)|Information only|none (read-only)|n/a
 cache_report|cleanup|macos|low|minimal,balanced,performance,gaming,developer,security|Report size of ~/Library/Caches (never deleted automatically)|Information only|none (read-only)|n/a
 # ---------------------------------------------------------------- Windows
-temp_cleanup|cleanup|windows|low|minimal,balanced,performance,gaming,developer,security|Delete files older than 7 days in %TEMP%|Frees disk space|irreversible (temporary files only)|%TEMP% size before/after
-startup_report|startup|windows|low|minimal,balanced,performance,gaming,developer,security|List startup programs (Win32_StartupCommand)|Information only|none (read-only)|n/a
-service_report|services|windows|low|minimal,balanced,performance,gaming,developer,security|Report automatic services that are stopped|Information only|none (read-only)|n/a
-storage_report|storage|windows|low|minimal,balanced,performance,gaming,developer,security|Report free space, media type and TRIM state (fsutil)|Information only|none (read-only)|n/a
-power_plan|power|windows|medium|performance,gaming|Activate the High performance power plan (skipped on battery)|Higher sustained clocks, more power draw|powercfg /setactive <previous GUID> (journaled)|powercfg /getactivescheme
-game_mode|gaming|windows|low|gaming|Enable Windows Game Mode (HKCU\Software\Microsoft\GameBar AutoGameModeEnabled=1)|Windows prioritises the foreground game|registry value restored from journal|registry value = 1
+# Implemented in windows/ArCoN/Private/Modules.ps1; ids are the task ids without the
+# "optimize."/"gaming." prefix. tests/pester checks that both lists stay identical.
+temp_cleanup|cleanup|windows|low|balanced,performance,gaming,developer|Delete files older than 7 days in %TEMP% and %SystemRoot%\Temp (files in use are kept)|Frees disk space|irreversible (temporary files only; recorded as NOTE)|number of files removed is reported
+startup_report|startup|windows|low|minimal,balanced,performance,gaming,developer,security|List HKLM/HKCU Run-key startup entries (nothing is disabled)|Information only|none (read-only)|n/a
+trim_report|storage|windows|low|minimal,balanced,performance,gaming,developer,security|Report system disk type, TRIM (DisableDeleteNotify) and the Optimize Drives task|Information only|none (read-only)|n/a
+power_plan|power|windows|medium|performance,gaming|Activate the High performance power plan (skipped on battery)|Higher sustained clocks, more power draw|powercfg /setactive <previous GUID> (journaled)|powercfg /getactivescheme equals the target GUID
+gamemode|gaming|windows|low|gaming|Enable Windows Game Mode (HKCU\Software\Microsoft\GameBar AllowAutoGameMode/AutoGameModeEnabled=1) -- gaming module, GAMING=yes|Windows prioritises the foreground game; no FPS gain is claimed|registry values restored from the journal|registry values = 1
+gpu_report|gaming|windows|low|gaming|Report GPU driver version and hardware-accelerated GPU scheduling -- gaming module|Information only|none (read-only)|n/a

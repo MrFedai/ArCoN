@@ -107,7 +107,7 @@ reset_run() {
                 plan_record SETTING "dconf dump / -> backup, then dconf reset -f / (ALL GNOME settings)"
             else
                 local dump; dump="$(rb_backup_dir)/dconf-full.ini"; mkdir -p "$(dirname "$dump")"
-                dconf dump / > "$dump" && rb_add DCONF / "$dump" || { log_error "dconf backup failed — not resetting"; return 1; }
+                if dconf dump / > "$dump"; then rb_add DCONF / "$dump"; else log_error "dconf backup failed — not resetting"; return 1; fi
                 x_run SETTING "reset all GNOME/dconf settings" -- dconf reset -f / || return 1
             fi
         fi

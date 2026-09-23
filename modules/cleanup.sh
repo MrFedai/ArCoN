@@ -14,8 +14,7 @@
 ARCON_MODULE=cleanup
 
 mod_cleanup_wizard() {
-    ui_confirm "Remove unnecessary leftovers (orphans, package cache, temp files)" n &&
-        cfg_set CLEANUP yes wizard || cfg_set CLEANUP no wizard
+    ui_confirm_set CLEANUP n "Remove unnecessary leftovers (orphans, package cache, temp files)"
     return 0
 }
 

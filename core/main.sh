@@ -144,9 +144,9 @@ _arcon_mode_rollback() {
         if [[ -z "$id" ]]; then
             # latest run that actually recorded changes (no-op re-runs are skipped)
             local d
-            for d in $(ls -1d "$ARCON_STATE_DIR"/runs/*/ 2>/dev/null | sort -r); do
+            while IFS= read -r d; do
                 [[ -s "$d/rollback.journal" ]] && { id="$(basename "$d")"; break; }
-            done
+            done < <(printf '%s\n' "$ARCON_STATE_DIR"/runs/*/ | sort -r)
         fi
     fi
     [[ -z "$id" ]] && die 3 "no run found to roll back"
@@ -227,6 +227,7 @@ arcon_main() {
     ui_init_colors
     log_init "${ARCON_LOG_TARGET:-}"
     log_set_level "${ARCON_LOG_LEVEL:-info}"
+    # shellcheck disable=SC2153  # ARCON_MODE is set by cli_parse (core/cli.sh)
     log_info "ArCoN ${ARCON_VERSION} starting (mode=$ARCON_MODE dry_run=${ARCON_DRY_RUN} interactive=${ARCON_INTERACTIVE})"
 
     platform_detect || die 3 "platform detection failed"

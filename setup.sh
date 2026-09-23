@@ -20,6 +20,7 @@ _arcon_info() { printf '\033[1;34m[*]\033[0m %s\n' "$1"; }
 _bash_ok() {
     # $1 = bash binary; requires >= 4.2
     local v
+    # shellcheck disable=SC2016  # expanded by the candidate bash, not by this shell
     v=$("$1" -c 'echo "${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}"' 2>/dev/null) || return 1
     case "$v" in
         [5-9].*|[1-9][0-9].*) return 0 ;;
@@ -30,7 +31,7 @@ _bash_ok() {
 
 if ! _bash_ok "$BASH"; then
     for _cand in /opt/homebrew/bin/bash /usr/local/bin/bash "$(command -v bash 2>/dev/null)"; do
-        [ -n "$_cand" ] && [ -x "$_cand" ] || continue
+        if [ -z "$_cand" ] || [ ! -x "$_cand" ]; then continue; fi
         if _bash_ok "$_cand"; then
             _arcon_info "re-executing with a newer bash: $_cand"
             exec "$_cand" "$0" "$@"

@@ -92,7 +92,7 @@ blackarch_enable() {
     (( rc == 0 )) || return $rc
     x_root COMMAND "locally sign BlackArch key $BLACKARCH_KEY_FPR" -- pacman-key --lsign-key "$BLACKARCH_KEY_FPR" || return 1
     pkg_invalidate; _PACMAN_SYNC_LOADED=0
-    blackarch_enabled && log_result "BlackArch repository" PASS || { log_result "BlackArch repository" FAIL "[blackarch] missing from pacman.conf"; return 1; }
+    if blackarch_enabled; then log_result "BlackArch repository" PASS; else log_result "BlackArch repository" FAIL "[blackarch] missing from pacman.conf"; return 1; fi
 }
 
 blackarch_providers() {
@@ -123,7 +123,7 @@ blackarch_install() {
     fi
     local rc=$?
     pkg_invalidate
-    (( rc == 0 )) && log_result "BlackArch $mode" PASS || log_result "BlackArch $mode" FAIL "pacman exit $rc (file conflicts? retry with --set BLACKARCH_OVERWRITE=yes only if you understand the risk)"
+    if (( rc == 0 )); then log_result "BlackArch $mode" PASS; else log_result "BlackArch $mode" FAIL "pacman exit $rc (file conflicts? retry with --set BLACKARCH_OVERWRITE=yes only if you understand the risk)"; fi
     return $rc
 }
 
