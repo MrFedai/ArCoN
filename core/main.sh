@@ -199,15 +199,25 @@ _arcon_mode_install() {
     cli_show_plan_and_confirm || { is_dry_run && plan_print; state_clear_current; return 0; }
 
     if is_dry_run; then
-        # execute every task in dry-run mode: they only record plan entries
-        local id
+        # Execute every task in dry-run mode: mutations only record plan entries.
+        # Warnings and errors stay visible and a task that fails in dry-run is
+        # reported (the first v3 draft discarded both with >/dev/null 2>&1 || true).
+        local id rc problems=0
         for id in "${TASK_IDS[@]}"; do
             ARCON_MODULE="${TASK_MODULE[$id]}"; ARCON_TASK="$id"
-            "${TASK_FN[$id]}" >/dev/null 2>&1 || true
+            rc=0; "${TASK_FN[$id]}" || rc=$?
+            if (( rc != 0 && rc != TASK_SKIP )); then
+                plan_record PROBLEM "would fail (exit $rc) — see the messages above"
+                problems=$((problems + 1))
+            fi
         done
         ARCON_TASK=""; ARCON_MODULE=core
         plan_print
         ui_say "${DIM}Nothing above was applied. Re-run without --dry-run to apply it.${NC}"
+        if (( problems > 0 )); then
+            log_error "dry-run: $problems task(s) would fail"
+            return 1
+        fi
         return 0
     fi
 

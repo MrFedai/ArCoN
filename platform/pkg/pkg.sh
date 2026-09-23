@@ -94,13 +94,30 @@ pkg_available() { [[ -n "$(_pkg_call available_filter "$1")" ]]; }
 
 # pkg_install <names...>  — sets PKG_LAST_INSTALLED / PKG_LAST_SKIPPED / PKG_LAST_FAILED
 pkg_install() {
-    PKG_LAST_INSTALLED=(); PKG_LAST_SKIPPED=(); PKG_LAST_FAILED=()
+    PKG_LAST_INSTALLED=(); PKG_LAST_SKIPPED=(); PKG_LAST_FAILED=(); PKG_LAST_UNAVAILABLE=()
     local todo=() n
     for n in "$@"; do
         [[ -z "$n" ]] && continue
         if pkg_is_installed "$n"; then PKG_LAST_SKIPPED+=("$n"); else todo+=("$n"); fi
     done
     (( ${#PKG_LAST_SKIPPED[@]} )) && log_info "already installed: ${PKG_LAST_SKIPPED[*]}"
+    (( ${#todo[@]} == 0 )) && return 0
+    # Repository availability (catalog names can be missing on older releases,
+    # e.g. hyprland on Ubuntu 24.04). Unavailable names are reported and skipped,
+    # never silently dropped; they do not block the available ones.
+    local -A _avail=(); local ok=() missing=()
+    while IFS= read -r n; do [[ -n "$n" ]] && _avail["$n"]=1; done < <(_pkg_call available_filter "${todo[@]}")
+    for n in "${todo[@]}"; do
+        if [[ -n "${_avail[$n]+x}" ]]; then ok+=("$n"); else missing+=("$n"); fi
+    done
+    PKG_LAST_UNAVAILABLE=("${missing[@]+"${missing[@]}"}")
+    if (( ${#missing[@]} )); then
+        log_warn "not available from the $PKG_PROVIDER repositories (skipped): ${missing[*]}"
+        if is_dry_run; then
+            for n in "${missing[@]}"; do plan_record PKG_UNAVAILABLE "$n  ($PKG_PROVIDER)"; done
+        fi
+    fi
+    todo=("${ok[@]+"${ok[@]}"}")
     (( ${#todo[@]} == 0 )) && return 0
     if is_dry_run; then
         for n in "${todo[@]}"; do plan_record PKG_INSTALL "$n  (via $PKG_PROVIDER)"; done

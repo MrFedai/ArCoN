@@ -1,214 +1,109 @@
-# 🐧 ArCoN v2.5
-**Arch Linux setup automation — one script, battle-ready system in 30 minutes.**
+# ArCoN v3.0
 
+Setup, hardening and gaming configuration toolkit for Arch Linux, Debian, Ubuntu, Fedora,
+openSUSE, macOS and Windows — with dry-run, profiles, resume and rollback.
+
+[![CI](https://github.com/MrFedai/ArCoN/actions/workflows/ci.yml/badge.svg?branch=v3.0)](https://github.com/MrFedai/ArCoN/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Arch Linux](https://img.shields.io/badge/Arch-Linux-1793D1?logo=arch-linux)](https://archlinux.org)
-[![Version](https://img.shields.io/badge/Version-2.5-orange)](https://github.com/mrfedai/ArCoN)
-[![Shell](https://img.shields.io/badge/Shell-Bash-green?logo=gnu-bash)](https://www.gnu.org/software/bash/)
 
-> **The ultimate Arch Linux automation toolkit.** One script. Infinite possibilities.  
-> Transform a fresh Arch install into a battle-ready powerhouse in under 30 minutes.
+ArCoN v3.0 is a refactor of [ArCoN v2.5](legacy/v2.5/README.md). Every v2.5 feature is kept,
+fixed or explicitly marked as not applicable to a platform — see the
+[feature parity matrix](docs/FEATURE-PARITY.md) and the [v2.5 audit](docs/AUDIT-v2.5.md).
 
----
+## Platform status
 
-## ⚡ One-Line Setup
+Honest status as of this release. "CI" means a GitHub Actions job exercises the code path;
+it does **not** mean the result was checked on real hardware. Details and evidence:
+[docs/PLATFORMS.md](docs/PLATFORMS.md) and [docs/FINAL-AUDIT-v3.0.md](docs/FINAL-AUDIT-v3.0.md).
+
+| Platform | Entry point | Level reached |
+|---|---|---|
+| Arch Linux (+ EndeavourOS, CachyOS as derivatives) | `setup.sh` | container dry-run in CI, mocked integration tests |
+| Debian stable | `setup.sh` | container dry-run in CI, mocked integration tests |
+| Ubuntu 24.04 / 26.04 | `setup.sh` | real run in an Ubuntu 26.04 VM (packages, resume, rollback); container dry-run for 24.04 |
+| Fedora | `setup.sh` | container dry-run in CI, mocked integration tests |
+| openSUSE Tumbleweed / Leap | `setup.sh` | container dry-run in CI (Tumbleweed), mocked integration tests |
+| macOS (Apple Silicon, Intel) | `setup.sh` (Homebrew) | dry-run on the GitHub macOS runner |
+| Windows 11 | `setup.ps1` (PowerShell 7) | Pester (mocked) + dry-run on the GitHub Windows runner |
+| Windows 10 | `setup.ps1` | experimental, not tested |
+
+Other distributions are detected and refused, or run as "experimental" when they are a known
+derivative of one of the above. Nothing has been validated on native hardware yet.
+
+## Quick start
+
+Linux / macOS:
 
 ```bash
-sudo pacman -S --needed --noconfirm git && git clone https://github.com/mrfedai/ArCoN.git && cd ArCoN && chmod +x setup.sh && ./setup.sh
+git clone https://github.com/MrFedai/ArCoN.git
+cd ArCoN
+./setup.sh --dry-run          # see what would change
+./setup.sh                    # interactive wizard (the v2.5 flow)
+./setup.sh --profile gaming   # or pick a profile
 ```
 
-**That's it.** No manual config editing. No dependency hell. Just run it.
+Windows (PowerShell 7, elevated):
 
----
-
-## 🔥 Why ArCoN?
-
-| Traditional Arch Setup | ArCoN Way |
-|------------------------|-----------|
-| 4+ hours of manual setup | **15-30 minutes** automated |
-| Googling package names | **Smart package database** with descriptions |
-| Breaking the system 3 times | **Built-in conflict resolution** |
-| Copy-pasting random dotfiles | **Curated themes** with one-click install |
-| "Why isn't Steam working?" | **Gaming Mode** with GPU auto-detect |
-| Manual security hardening | **Hardened Mode** with OpenSnitch + USBGuard |
-
----
-
-## 🚀 Modular Architecture (Sectors)
-
-| Sector | Function |
-|--------|----------|
-| **1 — Base System** | GPG auto-fix, live mirror benchmarking, YAY installation |
-| **2 — Cyber Security** | BlackArch repo manager, category-based tool installation |
-| **3 — Package Engine** | Visual progress bar, smart package preview & installation |
-| **4 — Gaming** | Steam, GPU drivers (NVIDIA/AMD/Intel), GameMode |
-| **5 — Hyprland** | 4 ready-made themes: Ax-Shell, Hyprdots, ML4W, JaKooLit |
-| **6 — GNOME** | Auto-configuration, custom keybindings, debloat |
-| **7 — Terminal** | Terminator/Kitty/Alacritty + Zsh/Fish/Bash theme setup |
-| **9 — Optimizations** | SSD TRIM, UFW firewall, Bluetooth, cache cleanup |
-
----
-
-## ⚠️ Important Notes
-
-- **Live USB users**: All changes are lost after reboot. Install Arch to disk first.
-- **NVIDIA users**: After installation, add `nvidia nvidia_modeset nvidia_uvm nvidia_drm` to `/etc/mkinitcpio.conf` and run `sudo mkinitcpio -P`.
-- **Gaming Mode** (Sector 4) requires Sector 6 (GNOME) to be configured first.
-
----
-## 🎯 Key Features
-
-- **Pre-Flight Checks**: Validates internet, disk space (min 10GB), and sudo privileges
-- **Resume System**: Interrupted installations automatically continue from last checkpoint
-- **Smart Conflict Resolution**: GPG, Java/Rust/OpenCL provider locks handled automatically
-- **Visual Progress Bar**: Real-time installation tracking
-- **Live Mirror Benchmark**: Top 10 fastest Arch mirrors selected automatically
-
----
-
-## 🛠️ Customization
-
-Add your own packages to `pacs.txt` before running:
-```
-code
-discord
-obs-studio
+```powershell
+git clone https://github.com/MrFedai/ArCoN.git
+cd ArCoN
+.\setup.ps1 -DryRun
+.\setup.ps1 -Profile Gaming
 ```
 
-Edit `configs/gno.conf` for GNOME settings, or `configs/hypr/` for Hyprland configs.
+Every run follows **detect → validate → plan → show → confirm if risky → apply → verify**.
+A run can be continued with `--resume` / `-Resume` and undone with `--rollback` / `-Rollback`.
 
----
+## Profiles
 
-## 📋 Installation Flow (30-Minute Journey)
+No profile is aggressive by default; high-risk steps always need an explicit confirmation.
 
-```mermaid
-graph TD
-    A[Pre-Flight Checks] --> B[Sector 1: Base System]
-    B --> C[Mirror Benchmark + YAY]
-    C --> D{Sector 2: BlackArch?}
-    D -->|Yes| E[BlackArch Manager]
-    D -->|No| F[Sector 3: Package Engine]
-    E --> F
-    F --> G{Sector 6: Desktop?}
-    G -->|GNOME| H[GNOME Config + Debloat]
-    G -->|Hyprland| I[Sector 5: Hyprland Themes]
-    H --> J{Sector 4: Gaming Mode?}
-    J -->|Yes| K[GPU Auto-Detect + Steam]
-    J -->|No| L[Sector 7: Terminal & Shell]
-    K --> L
-    I --> L
-    L --> M[Sector 9: Optimizations]
-    M --> N[Cleanup & Reboot]
-```
+| Profile | Content |
+|---|---|
+| `minimal` | base update + essential packages, low-risk maintenance only |
+| `balanced` | essentials + media, terminal & shell, firewall, low-risk optimizations |
+| `performance` | balanced + performance power profile, zram, storage maintenance |
+| `gaming` | Steam, GPU drivers (auto-detected), GameMode, MangoHud |
+| `developer` | essentials + power tools, kitty + zsh/powerlevel10k |
+| `security` | cyber and audit tools, firewall, sysctl + SSH hardening |
+| `full` | everything v2.5 offered (all groups, GNOME, gaming, terminal, security) |
+| `custom` | the classic v2.5 wizard — every sector asked step by step |
 
----
+Optimizations are listed with risk, effect, rollback and verification in
+[docs/OPTIMIZATIONS.md](docs/OPTIMIZATIONS.md). ArCoN does not promise FPS or speed gains.
 
-## 📜 Changelog
+## Modules
 
-### **v2.5** (Current) - *The Beast Update*
-**New Features:**
-- 🎮 **Unified Gaming + GPU**: Chained setup (requires GNOME)
-- 🛡️ **BlackArch Manager**: Interactive menu with smart conflict resolution
-- 📊 **Visual Progress Bars**: Real-time installation feedback
-- 🖼️ **Terminal Paradise**: Emulator + Shell + Theme configuration
-- 🎨 **Hyprland Themes**: 4 pre-configured dotfiles with pre-edit option
-- 🔍 **Reflector Live Output**: Numbered + colored mirror benchmarking
-- 🔄 **Resume System**: Automatic progress tracking (`.arcon_progress.log`)
-- 🧹 **Smart Cleanup**: Orphan + cache removal
-- 🛡️ **GPG Auto-Fix**: Handles Docker/Live USB conflicts
-- 🧠 **Zero Division Protection**: Fixed empty package list handling
+| Module | v2.5 sector | Platforms |
+|---|---|---|
+| base | 1 — base system, mirrors, keyring, AUR helper | Linux, macOS (Homebrew), Windows (preflight) |
+| packages | 3 — package engine | all ([catalog](docs/PACKAGE-CATALOG.md)) |
+| gnome | 2A — GNOME settings, debloat | Linux with GNOME |
+| gaming | 2B — Steam, GPU drivers, GameMode | Linux; Windows equivalents |
+| blackarch | 4 — BlackArch repository | Arch only |
+| hyprland | 6 — Hyprland + themes | Linux where Hyprland is packaged; each theme lists its own supported distros |
+| dotfiles | 7 — Terminator config, wallpapers | Linux, macOS |
+| terminal, shell | 8 — terminal emulator, zsh/fish/bash, Starship, Nerd Font | Linux, macOS |
+| security | 9 — tools, scans, firewall, hardening, Hardened Mode | Linux; macOS/Windows: tools where packaged; Windows: Defender/Firewall/BitLocker/UAC report |
+| optimize, cleanup | 9 + final cleanup | all |
+| reset | Smart Factory Reset | Linux, macOS (bash); not ported to Windows |
 
----
+## Documentation
 
-## 🔮 Coming in v3.0
+- [Usage](docs/USAGE.md) — every option, configuration keys, examples
+- [Architecture](docs/ARCHITECTURE.md) · [Platforms](docs/PLATFORMS.md) · [Security](docs/SECURITY.md)
+- [Testing](docs/TESTING.md) · [Development](docs/DEVELOPMENT.md) · [Change management](docs/CHANGE-MANAGEMENT.md)
+- [Migration from v2.5](docs/MIGRATION.md) · [Changelog](CHANGELOG.md)
+- [v2.5 audit](docs/AUDIT-v2.5.md) · [Feature parity](docs/FEATURE-PARITY.md) · [Final audit v3.0](docs/FINAL-AUDIT-v3.0.md)
 
-- **Cross-Platform Support** — Full compatibility with all Linux & Unix-based systems (Debian, Fedora, openSUSE, macOS and more)
-- **Object-Oriented Rewrite** — Entire codebase refactored into modular OOP architecture for easier maintenance and contribution
-- **Auto Hardware Detection** — GPU, CPU, and system specs detected automatically; drivers and updates applied accordingly — no manual selection needed
+## Notes
 
----
+- Live USB: detected; all changes are lost after reboot.
+- BlackArch: the repository is only added on explicit request, after checksum and key verification.
+- Remote installers (Hyprland themes, ML4W) are third-party code; ArCoN shows the source and commit
+  and asks before running them.
+- v2.5 is preserved unchanged in [legacy/v2.5](legacy/v2.5/README.md) and as git tag `v2.5.0`.
 
-💡 Ideas We'd Love help with:
-[ ] Support for other distros (Fedora, Manjaro)
+## License
 
-[ ] More Hyprland themes
-
-[ ] Gaming benchmarking tools
-
-[ ] Docker container support
-
-[ ] Automated testing framework
-
-### **Ideas We'd Love:**
-- Support for other distros (Fedora, Manjaro)
-- More Hyprland themes
-- Gaming benchmarking tools
-- Docker container support
-- Automated testing framework
-
----
-
-## 🤝 Contributing
-
-Want to make **ArCoN** even better? Here's how:
-1. **Fork the repo** (Click the "Fork" button at the top right of this page)
-2. **Clone your fork:** `the repo ```bash
-   git clone [https://github.com/YOUR-USERNAME/ArCoN.git](https://github.com/YOUR-USERNAME/ArCoN.git)
-   cd ArCoN`
-3. **Create** a feature branch: `git checkout -b feature/EpicFeature`
-4. **Commit** your changes: `git commit -m 'Add EpicFeature'`
-5. **Push**: `git push origin feature/EpicFeature`
-6. **Open** a Pull Request `git push origin feature/EpicFeature`
-7. Open a Pull Request via GitHub.
-
----
-
-
-## 📄 License
-
-MIT License - Do whatever you want, just keep the credits.
-
----
-
-## 🙏 Credits & Inspiration
-
-### **Hyprland Themes**
-- [Ax-Shell](https://github.com/Axenide/Ax-Shell) by Axenide
-- [Hyprdots](https://github.com/prasanthrangan/hyprdots) by Prasanth Rangan
-- [ML4W](https://github.com/mylinuxforwork/dotfiles) by Stephan Raabe
-- [JaKooLit](https://github.com/JaKooLit/Hyprland-Dots) by JaKooLit
-- [BlackArch](https://blackarch.org/) - CyberRepo
-- [hyprwm](https://github.com/hyprwm/Hyprland) - Hyprland
-
-
-### **Tools & Frameworks**
-- [Oh-My-Zsh](https://github.com/ohmyzsh/ohmyzsh) - Zsh framework
-- [Starship](https://github.com/starship/starship) - Cross-shell prompt
-- [Powerlevel10k](https://github.com/romkatv/powerlevel10k) - Zsh theme
-- [Reflector](https://xyne.dev/projects/reflector/) - Mirror optimization
-- [rkhunter](https://github.com/installation/rkhunter) - Rootkit & Backdoor Hunter
-- [clamav](https://github.com/Cisco-Talos/clamav) - Antivirus Engine 
-- [lynis](https://github.com/CISOfy/lynis) - System Hardening & Audit Tool
-- [Firejail](https://github.com/netblue30/firejail) - Application Sandboxing 
-- [arch-audit](https://github.com/ilpianista/arch-audit) - Vulnerability Scanner (CVE Check)
----
-
-## 📧 Support & Community
-
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/mrfedai/ArCoN/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/mrfedai/ArCoN/discussions)
-- 📧 **Email**: fedai1453.gok@gmail.com
-- 🌟 **Star the repo** if this saved you hours of setup time!
-
----
-
-<div align="center">
-
-### **Made with ❤️ and ☕ for the Arch Linux community**
-
-[![Star History](https://img.shields.io/github/stars/mrfedai/ArCoN?style=social)](https://github.com/mrfedai/ArCoN/stargazers)
-[![Forks](https://img.shields.io/github/forks/mrfedai/ArCoN?style=social)](https://github.com/mrfedai/ArCoN/network/members)
-
-*"I use Arch, btw... and ArCoN made it easy."*
-
-</div>
+[MIT](LICENSE)

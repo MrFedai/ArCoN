@@ -193,5 +193,13 @@ shell_chsh() {
     fi
     rb_add SHELL "$ARCON_USER" "$cur"
     x_root SETTING "change login shell of $ARCON_USER to $path (was $cur)" -- chsh -s "$path" "$ARCON_USER" || return 1
+    is_dry_run && return 0
+    local now; now="$(getent passwd "$ARCON_USER" 2>/dev/null | cut -d: -f7)"
+    [[ -n "$now" ]] || now="$(dscl . -read "/Users/$ARCON_USER" UserShell 2>/dev/null | awk '{print $2}')"
+    if [[ "$now" != "$path" ]]; then
+        log_result "login shell" FAIL "still '$now' after chsh"
+        return 1
+    fi
+    log_result "login shell" PASS "$path"
     log_warn "log out and back in for the new shell to take effect"
 }

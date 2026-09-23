@@ -76,6 +76,16 @@ mutating_calls() {  # package-manager calls that would change the system
     done
 }
 
+@test "dry-run reports packages missing from the repositories (never silently dropped)" {
+    mock_repo_from_catalog fedora
+    grep -vx 'nmap' "$ARCON_MOCK_AVAILABLE" > "$ARCON_MOCK_AVAILABLE.new"; mv "$ARCON_MOCK_AVAILABLE.new" "$ARCON_MOCK_AVAILABLE"
+    setup_on fedora --dry-run --profile security -y
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"NOT available on this system"* ]]
+    echo "$output" | grep -q -- '- \[packages.install\] nmap  (dnf)'
+    ! echo "$output" | grep -q -- 'nmap  (via dnf)'
+}
+
 @test "dry-run leaves no state pointer and creates no user files" {
     mock_repo_from_catalog arch
     setup_on arch --dry-run --profile full -y

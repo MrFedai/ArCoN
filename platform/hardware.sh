@@ -96,8 +96,6 @@ _hw_linux() {
     elif [[ -r "$S/sys/block/$dev/queue/rotational" ]]; then
         [[ "$(cat "$S/sys/block/$dev/queue/rotational")" == 0 ]] && HW_DISK_TYPE=ssd || HW_DISK_TYPE=hdd
     else HW_DISK_TYPE=unknown; fi
-    [[ "$HW_ROOT_FS" =~ ^(overlay|tmpfs|squashfs|aufs)$ ]] && HW_IS_LIVE=yes || HW_IS_LIVE=no
-    [[ -d "$S/run/archiso" || -d "$S/run/live" || -f "$S/run/initramfs/live" ]] && HW_IS_LIVE=yes
     HW_DISK_FREE_GB="$(df -Pk "${S:-/}" 2>/dev/null | awk 'NR==2{printf "%d", $4/1024/1024}')"
 
     # Network interfaces (non-loopback)
@@ -114,13 +112,25 @@ _hw_linux() {
     elif [[ -f "$S/run/.containerenv" ]]; then HW_VIRT="container:podman"
     elif grep -qi microsoft "$S/proc/sys/kernel/osrelease" 2>/dev/null; then HW_VIRT=wsl
     elif [[ -z "$S" ]] && command -v systemd-detect-virt >/dev/null 2>&1; then
-        HW_VIRT="$(systemd-detect-virt 2>/dev/null || true)"; [[ -z "$HW_VIRT" ]] && HW_VIRT=none
+        local ctype
+        if ctype="$(systemd-detect-virt -c 2>/dev/null)" && [[ -n "$ctype" && "$ctype" != none ]]; then
+            HW_VIRT="container:$ctype"
+        else
+            HW_VIRT="$(systemd-detect-virt 2>/dev/null || true)"; [[ -z "$HW_VIRT" ]] && HW_VIRT=none
+        fi
     elif [[ -r "$S/sys/class/dmi/id/product_name" ]]; then
         case "$(cat "$S/sys/class/dmi/id/product_name")" in
             *VirtualBox*) HW_VIRT=oracle ;; *VMware*) HW_VIRT=vmware ;; *KVM*|*QEMU*|*Standard\ PC*) HW_VIRT=kvm ;;
             *) HW_VIRT=none ;;
         esac
     else HW_VIRT=none; fi
+
+    # Live environment. An overlay/tmpfs root is normal inside containers, so it
+    # only counts as "live" on bare metal / VMs (CI found a false positive in
+    # every distro container). Live-ISO markers count everywhere.
+    HW_IS_LIVE=no
+    if [[ "$HW_ROOT_FS" =~ ^(overlay|tmpfs|squashfs|aufs)$ && "$HW_VIRT" != container:* ]]; then HW_IS_LIVE=yes; fi
+    if [[ -d "$S/run/archiso" || -d "$S/run/live" || -f "$S/run/initramfs/live" ]]; then HW_IS_LIVE=yes; fi
 
     # Secure Boot (EFI variable: last byte 1 = enabled)
     local sb

@@ -93,7 +93,8 @@ packages_install() {
     fi
 
     if is_dry_run; then
-        for n in "${todo[@]}"; do plan_record PKG_INSTALL "$n  (via $PKG_PROVIDER)"; done
+        # pkg_install records the plan and reports repository-unavailable names
+        (( ${#todo[@]} )) && pkg_install "${todo[@]}"
         (( ${#flat[@]} )) && flatpak_install "${flat[@]}"
         return 0
     fi
@@ -105,11 +106,17 @@ packages_install() {
         for n in "${todo[@]}"; do
             i=$((i + 1))
             ui_progress "$((i - 1))" "$total" "installing $n"
-            if pkg_install "$n" >/dev/null 2>&1; then :; else PKG_FAILED_IDS+=("$n"); fi
+            if pkg_install "$n" >/dev/null 2>&1; then
+                PKG_UNAVAILABLE_IDS+=("${PKG_LAST_UNAVAILABLE[@]+"${PKG_LAST_UNAVAILABLE[@]}"}")
+            else PKG_FAILED_IDS+=("$n"); fi
         done
         ui_progress "$total" "$total" "done"
     elif (( total > 0 )); then
         pkg_install "${todo[@]}" || PKG_FAILED_IDS+=("${PKG_LAST_FAILED[@]}")
+        PKG_UNAVAILABLE_IDS+=("${PKG_LAST_UNAVAILABLE[@]+"${PKG_LAST_UNAVAILABLE[@]}"}")
+    fi
+    if (( ${#PKG_UNAVAILABLE_IDS[@]} )); then
+        log_warn "not installed because unavailable on this system: ${PKG_UNAVAILABLE_IDS[*]}"
     fi
     (( ${#flat[@]} )) && { flatpak_install "${flat[@]}" || PKG_FAILED_IDS+=("flatpak:${flat[*]}"); }
 
@@ -118,7 +125,7 @@ packages_install() {
         log_error "recovery: check the log, then re-run: ./setup.sh --resume"
         return 1
     fi
-    log_result "package installation" PASS "${total} installed, $(( ${#native[@]} - total )) already present"
+    log_result "package installation" PASS "${total} requested, $(( ${#native[@]} - total )) already present, ${#PKG_UNAVAILABLE_IDS[@]} unavailable (listed above)"
 }
 
 packages_arch_preview() {

@@ -37,7 +37,7 @@ plan_record() {
 plan_count() { printf '%s' "${#ARCON_PLAN[@]}"; }
 
 plan_print() {
-    local cats=(REPO PKG_INSTALL PKG_REMOVE FILE SETTING SERVICE OPTIMIZE COMMAND) c e shown n=0
+    local cats=(REPO PKG_INSTALL PKG_UNAVAILABLE PKG_REMOVE FILE SETTING SERVICE OPTIMIZE COMMAND PROBLEM) c e shown n=0
     ui_header "DRY-RUN PLAN (no changes were made)"
     for c in "${cats[@]}"; do
         shown=0
@@ -47,12 +47,14 @@ plan_print() {
                 case "$c" in
                     REPO)        ui_say "\n${BOLD}Repositories to change:${NC}" ;;
                     PKG_INSTALL) ui_say "\n${BOLD}Packages to install:${NC}" ;;
+                    PKG_UNAVAILABLE) ui_say "\n${YELLOW}Packages NOT available on this system (would be skipped):${NC}" ;;
                     PKG_REMOVE)  ui_say "\n${BOLD}Packages to remove:${NC}" ;;
                     FILE)        ui_say "\n${BOLD}Files to create/modify/remove:${NC}" ;;
                     SETTING)     ui_say "\n${BOLD}Settings to change:${NC}" ;;
                     SERVICE)     ui_say "\n${BOLD}Services to modify:${NC}" ;;
                     OPTIMIZE)    ui_say "\n${BOLD}Optimizations to apply:${NC}" ;;
                     COMMAND)     ui_say "\n${BOLD}Other commands:${NC}" ;;
+                    PROBLEM)     ui_say "\n${RED}Problems found (these tasks would fail):${NC}" ;;
                 esac
                 shown=1
             fi

@@ -44,3 +44,27 @@ sys() { ARCON_SYSROOT="$ARCON_REPO/tests/fixtures/sys/$1" hw_detect force; }
     [ "$(printf '%s\n' "$output" | cut -d= -f1 | sort | uniq -d)" = "" ]
     [ "$(printf '%s\n' "$output" | wc -l)" -eq "${#HW_KEYS[@]}" ]
 }
+
+# Live-environment detection (CI found every distro container reported as "live")
+live_fixture() {
+    local d="$BATS_TEST_TMPDIR/sys"
+    cp -r "$ARCON_REPO/tests/fixtures/sys/none" "$d"
+    echo overlay > "$d/arcon-root-fs"; echo sda > "$d/arcon-root-device"
+    printf '%s' "$d"
+}
+@test "overlay root inside a Docker container is NOT a live system" {
+    d="$(live_fixture)"; : > "$d/.dockerenv"
+    ARCON_SYSROOT="$d" hw_detect force
+    [ "$HW_VIRT" = container:docker ]
+    [ "$HW_IS_LIVE" = no ]
+}
+@test "overlay root outside a container is a live system" {
+    d="$(live_fixture)"
+    ARCON_SYSROOT="$d" hw_detect force
+    [ "$HW_IS_LIVE" = yes ]
+}
+@test "archiso marker means live even inside a container" {
+    d="$(live_fixture)"; : > "$d/.dockerenv"; mkdir -p "$d/run/archiso"
+    ARCON_SYSROOT="$d" hw_detect force
+    [ "$HW_IS_LIVE" = yes ]
+}
