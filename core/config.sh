@@ -56,7 +56,8 @@ cfg_load_file() {
     fi
     while IFS= read -r line || [[ -n "$line" ]]; do
         n=$((n + 1))
-        _cfg_parse_line "$line"; rc=$?
+        # (written so it also behaves under `set -e`, e.g. inside bats)
+        rc=0; _cfg_parse_line "$line" || rc=$?
         if (( rc == 0 )); then
             ARCON_CFG["$_CFG_K"]="$_CFG_V"
             ARCON_CFG_SRC["$_CFG_K"]="$label:$n"
@@ -107,7 +108,7 @@ cfg_list_has() {
 }
 
 # cfg_list <KEY> -> one item per line
-cfg_list() { cfg "$1" | tr ', ' '\n\n' | sed '/^$/d'; }
+cfg_list() { printf '%s\n' "$(cfg "$1")" | tr ', ' '\n\n' | sed '/^$/d'; }
 
 # cfg_dump [file] -> write effective config (used by resume)
 cfg_dump() {

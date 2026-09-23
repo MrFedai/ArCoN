@@ -4,6 +4,9 @@
 #
 #   fs_install_file <src> <dest> [root] [mode]  copy when content differs
 #   fs_write <dest> [root] [mode]  < content      write when content differs
+#       NOTE: feed content with a here-doc/here-string, never `cmd | fs_write`:
+#       a pipeline runs fs_write in a subshell and the dry-run plan entry would
+#       be lost (found by tests/bats/unit_dryrun.bats).
 #   fs_append_once <file> <line> [root]         append line if missing (no duplicates)
 #   fs_set_kv <file> <regex> <replacement-line> [root]
 #                                                replace first matching line or append

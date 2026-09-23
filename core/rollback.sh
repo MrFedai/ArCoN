@@ -58,7 +58,11 @@ fs_backup() {
 rollback_run() {
     local run_dir="$1" with_pkgs="${2:-0}" j lines i type a b c ok=0 fail=0
     j="$run_dir/rollback.journal"
-    [[ -f "$j" ]] || { log_error "no rollback journal in $run_dir"; return 1; }
+    [[ -d "$run_dir" ]] || { log_error "run directory not found: $run_dir"; return 1; }
+    if [[ ! -s "$j" ]]; then
+        log_info "run $(basename "$run_dir") made no recorded changes — nothing to roll back"
+        return 0
+    fi
     mapfile -t lines < "$j"
     log_info "rolling back ${#lines[@]} journal entries from $run_dir"
     for (( i=${#lines[@]}-1; i>=0; i-- )); do

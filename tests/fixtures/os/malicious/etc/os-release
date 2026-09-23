@@ -1,0 +1,3 @@
+NAME="Evil"
+ID=$(touch /tmp/arcon-pwned)
+PRETTY_NAME="`touch /tmp/arcon-pwned2`"

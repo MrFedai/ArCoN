@@ -141,7 +141,13 @@ _arcon_mode_rollback() {
     local id="$ARCON_ROLLBACK_RUN"
     if [[ -z "$id" ]]; then
         id="$(state_current_run 2>/dev/null || true)"
-        [[ -z "$id" ]] && id="$(state_list_runs | tail -n1 | awk '{print $1}')"
+        if [[ -z "$id" ]]; then
+            # latest run that actually recorded changes (no-op re-runs are skipped)
+            local d
+            for d in $(ls -1d "$ARCON_STATE_DIR"/runs/*/ 2>/dev/null | sort -r); do
+                [[ -s "$d/rollback.journal" ]] && { id="$(basename "$d")"; break; }
+            done
+        fi
     fi
     [[ -z "$id" ]] && die 3 "no run found to roll back"
     state_open_run "$id"

@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# ArCoN test double for package managers and system tools.
+# Every invocation is appended to $ARCON_MOCK_LOG as one line: "<tool> <args...>".
+# Behaviour is data-driven:
+#   $ARCON_MOCK_INSTALLED   file: installed package names (one per line)
+#   $ARCON_MOCK_AVAILABLE   file: names available in the repositories
+#   $ARCON_MOCK_FAIL        space-separated package names whose install must fail
+# Installs append to ARCON_MOCK_INSTALLED, removals delete from it, so
+# idempotency and rollback can be asserted against real state changes.
+tool="$(basename "$0")"
+printf '%s %s\n' "$tool" "$*" >> "${ARCON_MOCK_LOG:-/dev/null}"
+inst="${ARCON_MOCK_INSTALLED:-/dev/null}"; avail="${ARCON_MOCK_AVAILABLE:-/dev/null}"
+
+_installed() { cat "$inst" 2>/dev/null; }
+_available() { cat "$avail" 2>/dev/null; }
+_add() { local p; for p in "$@"; do
+            [[ " ${ARCON_MOCK_FAIL:-} " == *" $p "* ]] && { echo "error: target not found: $p" >&2; return 1; }
+         done
+         for p in "$@"; do grep -qxF -- "$p" "$inst" 2>/dev/null || printf '%s\n' "$p" >> "$inst"; done; }
+_del() { local p t; for p in "$@"; do t="$(grep -vxF -- "$p" "$inst" 2>/dev/null)"; printf '%s\n' "$t" | sed '/^$/d' > "$inst"; done; }
+_names() { local a out=(); for a in "$@"; do [[ "$a" == -* ]] || out+=("$a"); done; printf '%s\n' "${out[@]}"; }
+
+case "$tool" in
+    pacman)
+        case "$1" in
+            -Qq) _installed ;;
+            -Slq) _available ;;
+            -Sgq|-Sg) : ;;
+            -Qdtq|-Qtdq) : ;;
+            -Qi|-Q) grep -qxF -- "$2" "$inst" ;;
+            -S|-S\ *|--sync) shift; mapfile -t n < <(_names "$@"); _add "${n[@]}" ;;
+            -Syu|-Syyu|-Sy) : ;;
+            -R|-Rs|-Rns) shift; mapfile -t n < <(_names "$@"); _del "${n[@]}" ;;
+            *) case "$1" in -S*) shift; mapfile -t n < <(_names "$@"); _add "${n[@]}" ;; esac ;;
+        esac ;;
+    rpm)
+        case "$1" in -qa) _installed ;; -q) grep -qxF -- "$2" "$inst" ;; esac ;;
+    dnf)
+        args=("$@"); sub=""
+        for a in "${args[@]}"; do [[ "$a" == -* ]] && continue; sub="$a"; break; done
+        case "$sub" in
+            repoquery) shift; mapfile -t want < <(_names "$@" | grep -v '^repoquery$'); for w in "${want[@]}"; do grep -qxF -- "$w" "$avail" && echo "$w"; done ;;
+            install) mapfile -t n < <(_names "$@" | grep -v '^install$'); _add "${n[@]}" ;;
+            remove) mapfile -t n < <(_names "$@" | grep -v '^remove$'); _del "${n[@]}" ;;
+            *) : ;;
+        esac ;;
+    zypper)
+        if [[ " $* " == *" search "* ]]; then
+            last="${!#}"; grep -qxF -- "$last" "$avail" && printf 'i | %s | pkg\n' "$last"
+        elif [[ " $* " == *" install "* || " $* " == *" in "* ]]; then
+            mapfile -t n < <(_names "$@" | grep -vE '^(install|in)$'); _add "${n[@]}"
+        elif [[ " $* " == *" remove "* || " $* " == *" rm "* ]]; then
+            mapfile -t n < <(_names "$@" | grep -vE '^(remove|rm)$'); _del "${n[@]}"
+        fi ;;
+    brew)
+        case "$1" in
+            list) _installed ;;
+            info) grep -qxF -- "${!#}" "$avail" ;;
+            install) shift; mapfile -t n < <(_names "$@"); _add "${n[@]}" ;;
+            uninstall) shift; mapfile -t n < <(_names "$@"); _del "${n[@]}" ;;
+        esac ;;
+    flatpak)
+        case "$1" in list) : ;; esac ;;
+    sudo)
+        # run the command directly (tests never execute destructive real commands)
+        while [[ "${1:-}" == -* ]]; do shift; done
+        [[ $# -eq 0 ]] && exit 0
+        exec "$@" ;;
+    systemctl|usermod|chsh|reflector|ufw|firewall-cmd|powerprofilesctl|paccache|journalctl) : ;;
+esac
+exit 0
